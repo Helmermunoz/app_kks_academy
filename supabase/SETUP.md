@@ -8,7 +8,11 @@ son la siguiente etapa; los videos existentes siguen siendo una demostración lo
 
 Crear un proyecto en Supabase. Guardar la contraseña de la base de datos fuera del
 repositorio. En SQL Editor, ejecutar una sola vez
-`migrations/202609230001_academy.sql` completo.
+`migrations/202609230001_academy.sql` completo. Después ejecutar
+`migrations/202609230002_profile_service_permissions.sql` para dar a la función
+del servidor permiso de lectura y creación de perfiles. Este segundo archivo
+también se debe aplicar a los proyectos que ya ejecutaron la primera migración;
+no es necesario repetir la primera.
 
 En Authentication, desactivar el registro público de usuarios. Las cuentas de
 atletas y entrenadores se crearán desde el panel del administrador de esta app.

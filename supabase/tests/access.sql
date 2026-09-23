@@ -5,6 +5,13 @@ create function pg_temp.check_access(ok boolean, description text) returns void
 language plpgsql as $$ begin
   if ok is distinct from true then raise exception 'FAILED: %', description; end if;
 end $$;
+select pg_temp.check_access(
+  has_schema_privilege('service_role', 'public', 'USAGE')
+  and has_table_privilege('service_role', 'public.profiles', 'SELECT'),
+  'account creation server can read caller profile');
+select pg_temp.check_access(
+  has_table_privilege('service_role', 'public.profiles', 'INSERT'),
+  'account creation server can insert profile');
 
 insert into auth.users(id, email) values
 ('00000000-0000-0000-0000-000000000001', 'admin@rls.example'),
