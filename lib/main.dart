@@ -1,13 +1,41 @@
 import 'academy_brand.dart';
+import 'academy_portal.dart';
+import 'academy_repository.dart';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'session_videos_stub.dart'
     if (dart.library.js_interop) 'session_videos_web.dart';
 
 import 'package:flutter/material.dart';
 
-void main() => runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  const url = String.fromEnvironment('SUPABASE_URL');
+  const key = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+  AcademyRepository? repository;
+  String? startupError;
+  if (url.isNotEmpty && key.isNotEmpty) {
+    try {
+      await Supabase.initialize(url: url, publishableKey: key);
+      repository = SupabaseAcademyRepository(Supabase.instance.client);
+    } catch (_) {
+      startupError = 'No se pudo conectar con la academia. Revisa la configuración y vuelve a abrir la app.';
+    }
+  }
+  runApp(MyApp(repository: repository, startupError: startupError));
+}
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final AcademyRepository? repository;
+  final String? startupError;
+  final bool demo;
+  const MyApp({
+    super.key,
+    this.repository,
+    this.startupError,
+    this.demo = false,
+  });
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'KKs Academy',
@@ -17,7 +45,45 @@ class MyApp extends StatelessWidget {
       scaffoldBackgroundColor: const Color(0xffdcefea),
       useMaterial3: true,
     ),
-    home: const AcademyHome(),
+    home: demo
+        ? const AcademyHome()
+        : repository != null
+        ? AcademyPortal(repository: repository!)
+        : SetupPage(error: startupError),
+  );
+}
+
+class SetupPage extends StatelessWidget {
+  final String? error;
+  const SetupPage({super.key, this.error});
+  @override
+  Widget build(BuildContext context) => PortalFrame(
+    title: 'KKs ACADEMY',
+    child: Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Estamos preparando tu academia',
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              error ?? 'El acceso con cuentas todavía no está habilitado. Mientras tanto, puedes explorar el diseño con datos de ejemplo.',
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const AcademyHome()),
+              ),
+              child: const Text('Explorar demostración'),
+            ),
+          ],
+        ),
+      ),
+    ),
   );
 }
 

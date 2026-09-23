@@ -1,0 +1,3 @@
+[functions.create-account]
+# The handler verifies the JWT with Auth and checks the stored administrator role.
+verify_jwt = false

@@ -20,8 +20,15 @@ jobs:
       - uses: actions/configure-pages@v5
       - run: flutter pub get
       - run: flutter analyze
+      - run: flutter test
       - name: Build website
-        run: flutter build web --release --base-href /app_kks_academy/
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: >-
+          flutter build web --release --base-href /app_kks_academy/
+          --dart-define="SUPABASE_URL=$SUPABASE_URL"
+          --dart-define="SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY"
       - uses: actions/upload-pages-artifact@v4
         with:
           path: build/web

@@ -1,6 +1,16 @@
 ﻿# KKs Academy
 
-Prototipo web en Flutter para seguimiento de jugadores de béisbol de todas las posiciones.
+App web en Flutter para seguimiento de jugadores de béisbol de todas las posiciones.
+
+## Cuentas y entrenamientos personales
+
+La app incluye acceso con Supabase, administrador, entrenadores asignados a atletas,
+creación de cuentas con contraseña temporal, entrenamientos privados y registro de
+sesiones completadas. Para activar estas funciones, seguir [la guía de configuración](supabase/SETUP.md).
+La migración y la función del servidor están incluidas, pero requieren un proyecto
+de Supabase configurado y desplegado. Sin configuración se puede explorar la demo.
+
+Los videos compartidos y las métricas de movimiento todavía están pendientes.
 
 ## Ejecutar
 
@@ -9,7 +19,7 @@ flutter pub get
 flutter run -d chrome
 ```
 
-## Estado actual
+## Demostración de diseño
 
 - Calendario semanal y programa según posición.
 - Vista de entrenador de demostración para asignar plantillas.
@@ -19,12 +29,12 @@ flutter run -d chrome
 
 **Es una demostración:** no hay autenticación, permisos reales ni base de datos. Videos, comentarios y cambios se pierden al recargar. Los archivos de video no se suben a un servidor. El cambio de perfil no ofrece seguridad.
 
-## Continuar: base de datos
+## Próximas etapas
 
-1. Elegir proveedor de autenticación, base de datos y almacenamiento privado.
-2. Crear cuentas desde administración y flujo de contraseña temporal.
-3. Definir alumnos, entrenadores, posiciones principales/secundarias y permisos por alumno.
-4. Persistir semanas, sesiones, ejercicios, lanzamientos, distancias y ubicaciones.
+1. Crear el proyecto de Supabase y aplicar la configuración incluida.
+2. Verificar permisos con las pruebas SQL y cuentas reales de prueba.
+3. Incorporar posiciones principales/secundarias por atleta.
+4. Ampliar los entrenamientos con ejercicios estructurados, lanzamientos, distancias y ubicaciones.
 5. Conservar versiones e historial al modificar posiciones o programas; el prototipo todavía no lo implementa.
 6. Incorporar planes de alimentación y citas de terapia asignados por profesionales.
 7. Subir videos a almacenamiento privado, vinculados al alumno y sesión; persistir comentarios con marca de tiempo y autor.
