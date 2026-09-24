@@ -6,6 +6,7 @@ import 'academy_brand.dart';
 import 'academy_repository.dart';
 import 'session_details.dart';
 import 'video_panel.dart';
+import 'nutrition_page.dart';
 
 String roleLabel(String role) => switch (role) {
   'admin' => 'Administrador',
@@ -459,6 +460,22 @@ class _MemberPageState extends State<MemberPage> {
                 const Padding(
                   padding: EdgeInsets.all(24),
                   child: Text('Todavía no hay entrenamientos asignados.'),
+                ),
+              if (athlete != null && repo.nutritionStore != null)
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.restaurant),
+                  label: const Text('Mi alimentación / InBody'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => NutritionPage(
+                        store: repo.nutritionStore!,
+                        athlete: athlete!,
+                        athleteName: people.firstWhere(
+                          (p) => p['id'] == athlete,
+                        )['name'],
+                      ),
+                    ),
+                  ),
                 ),
               TherapyNotice(sessions: workouts, completed: completed),
               if (repo.videoStore != null)

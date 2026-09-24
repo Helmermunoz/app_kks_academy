@@ -39,6 +39,27 @@ En Authentication, desactivar el registro público de usuarios. Las cuentas de
 atletas y entrenadores se crearán desde el panel del administrador de esta app.
 No se usan metadatos editables del usuario para decidir permisos.
 
+### Alimentación e InBody
+
+Ejecutar una vez `migrations/202609230004_nutrition_inbody.sql` para habilitar
+el perfil de alimentación y el historial InBody. Los atletas pueden registrar
+sus propios datos; administración y entrenadores asignados pueden consultarlos
+y registrarlos. Otros atletas y entrenadores sin asignación no tienen acceso.
+No existe todavía un rol independiente de nutriólogo.
+
+Las mediciones se agregan al historial, no se reemplazan. Si hay un error de captura,
+administración debe corregirlo desde Supabase; no hay edición/borrado en la app.
+Los valores de estatura, peso, grasa, músculo y metabolismo basal son transcripciones
+del reporte, no diagnósticos ni metas de ingesta. Los campos opcionales vacíos quedan
+sin medición. Se muestran las últimas 500 evaluaciones; las anteriores se conservan.
+La gráfica permite elegir la medida y usa la fecha de evaluación como eje horizontal.
+Las observaciones se ingresan manualmente, sin verificar la identidad profesional
+del autor del reporte. No hay OCR ni conexión con InBody ni un proveedor de IA.
+
+Ejecutar `tests/nutrition.sql` solo en un proyecto de prueba para comprobar el
+aislamiento entre atletas, acceso del entrenador asignado y conservación del historial.
+Después comprobar guardado/recarga desde la app con cuentas distintas.
+
 ## 2. Primer administrador
 
 En Authentication > Users, crear la cuenta del propietario con un correo real y

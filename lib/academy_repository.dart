@@ -1,10 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'video_store.dart';
+import 'nutrition_store.dart';
 
 typedef Record = Map<String, dynamic>;
 
 abstract class AcademyRepository {
+  NutritionStore? get nutritionStore;
   VideoStore? get videoStore;
   String? get userId;
   Stream<String?> get sessions;
@@ -37,6 +39,8 @@ abstract class AcademyRepository {
 class SupabaseAcademyRepository implements AcademyRepository {
   final SupabaseClient client;
   SupabaseAcademyRepository(this.client);
+  @override
+  NutritionStore get nutritionStore => SupabaseNutritionStore(client);
   @override
   VideoStore get videoStore => VideoStore(client);
   @override

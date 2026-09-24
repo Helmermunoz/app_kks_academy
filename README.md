@@ -16,6 +16,12 @@ y consultar la galería de la academia con una cuenta activa. Requiere aplicar l
 migración `202609230003_session_details_videos.sql` en Supabase.
 Las métricas de movimiento todavía están pendientes.
 
+El apartado Mi alimentación / InBody permite registrar fecha de nacimiento,
+objetivos, alergias, preferencias y presupuesto, además de evaluaciones InBody
+con historial y gráfica por medida. Requiere la migración
+`202609230004_nutrition_inbody.sql`. Los datos son privados por atleta y permisos
+de entrenador; no se envían a IA. La generación de menús sigue pendiente.
+
 ## Ejecutar
 
 ```sh

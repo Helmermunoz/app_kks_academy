@@ -7,6 +7,8 @@ import 'package:app_kks_academy/main.dart';
 
 class FakeAcademy extends AcademyRepository {
   @override
+  get nutritionStore => null;
+  @override
   get videoStore => null;
   String? current = 'athlete-a';
   String role = 'athlete';
