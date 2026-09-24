@@ -1,8 +1,8 @@
 # Activar las cuentas de KKs Academy
 
-Esta etapa implementa cuentas, permisos y entrenamientos personales para una sola
-academia por proyecto de Supabase. Los videos compartidos y el análisis de postura
-son la siguiente etapa; los videos existentes siguen siendo una demostración local.
+Esta etapa implementa cuentas, permisos, sesiones con lugar y horario, avisos de
+terapia y videos compartidos para una sola academia por proyecto de Supabase.
+El análisis de postura todavía está pendiente.
 
 ## 1. Crear el proyecto
 
@@ -13,6 +13,27 @@ repositorio. En SQL Editor, ejecutar una sola vez
 del servidor permiso de lectura y creación de perfiles. Este segundo archivo
 también se debe aplicar a los proyectos que ya ejecutaron la primera migración;
 no es necesario repetir la primera.
+
+Después ejecutar `migrations/202609230003_session_details_videos.sql` una sola vez.
+Agrega los campos de sesiones, la tabla de videos y el bucket privado
+`session-videos` con sus políticas. No repetir migraciones ya aplicadas.
+
+Las sesiones anteriores conservan sus datos y se clasifican como Entrenamiento;
+editar cada una para indicar Bullpen, Pista o Terapia y completar lugar y hora.
+El plan de tiros es texto definido por el entrenador (cantidad, distancia,
+intensidad, lanzamientos y descansos); la app no prescribe cargas automáticamente.
+El aviso de terapia se muestra dentro de la app para citas pendientes desde hoy,
+usando la fecha local del dispositivo. No envía notificaciones push ni correos.
+
+Desde cada sesión deportiva se pueden subir videos de hasta 50 MB (MP4, WebM,
+MOV); MP4 ofrece mayor compatibilidad entre navegadores. Todos los miembros con
+contraseña personal pueden verlos, incluyendo fecha, tipo y nombre del atleta.
+Las instrucciones, ubicación y planes privados no se comparten en la galería.
+Las terapias no admiten videos compartidos. Las URLs de reproducción vencen en
+una hora: volver a abrir el video genera otra. Cada listado muestra los últimos
+100 videos. La eliminación y moderación se gestiona desde Supabase por ahora;
+si una carga se interrumpe puede quedar un archivo sin ficha, que debe revisarse
+en Storage. No hay carga reanudable, comentarios ni análisis del esqueleto todavía.
 
 En Authentication, desactivar el registro público de usuarios. Las cuentas de
 atletas y entrenadores se crearán desde el panel del administrador de esta app.
@@ -84,6 +105,12 @@ Después, probar con un administrador, dos entrenadores y dos atletas:
 7. Quitar una asignación y comprobar que el entrenador pierde acceso al recargar.
 8. Intentar invocar `create-account` sin sesión y como atleta: debe rechazar ambas.
 9. Cerrar sesión y comprobar que ya no se muestran datos privados.
+
+Ejecutar también `tests/session_videos.sql` en un proyecto vacío de prueba con
+las tres migraciones aplicadas. Comprueba permisos de sesiones y videos con
+metadatos simulados. Después probar la carga y reproducción de un archivo real,
+su persistencia al recargar, visualización con otro atleta y rechazo de una carga
+en una sesión ajena. Estas pruebas de servidor requieren ejecutarse en Supabase.
 
 Los entrenamientos se cargan al entrar, al cambiar de atleta y al pulsar Actualizar;
 no hay sincronización en tiempo real. Editar el contenido conserva la marca de

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'academy_brand.dart';
 import 'academy_repository.dart';
+import 'session_details.dart';
+import 'video_panel.dart';
 
 String roleLabel(String role) => switch (role) {
   'admin' => 'Administrador',
@@ -275,8 +277,14 @@ class _MemberPageState extends State<MemberPage> {
       context: context,
       builder: (_) => WorkoutDialog(
         workout: workout,
-        save: (day, title, instructions) =>
-            repo.saveWorkout(target, workout?['id'], day, title, instructions),
+        save: (day, title, instructions, details) => repo.saveWorkout(
+          target,
+          workout?['id'],
+          day,
+          title,
+          instructions,
+          details: details,
+        ),
       ),
     );
     if (saved == true && mounted) await reload();
@@ -452,6 +460,16 @@ class _MemberPageState extends State<MemberPage> {
                   padding: EdgeInsets.all(24),
                   child: Text('Todavía no hay entrenamientos asignados.'),
                 ),
+              TherapyNotice(sessions: workouts, completed: completed),
+              if (repo.videoStore != null)
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.video_library),
+                  label: const Text('Videos de la academia'),
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (_) => VideoPanel(store: repo.videoStore!),
+                  ),
+                ),
               ...workouts.map(
                 (w) => Card(
                   child: Padding(
@@ -472,6 +490,21 @@ class _MemberPageState extends State<MemberPage> {
                         ),
                         const SizedBox(height: 10),
                         Text(w['instructions']),
+                        SessionDetails(session: w),
+                        if (repo.videoStore != null && w['kind'] != 'therapy')
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.video_collection),
+                            label: const Text(
+                              'Ver / subir videos de esta sesión',
+                            ),
+                            onPressed: () => showDialog<void>(
+                              context: context,
+                              builder: (_) => VideoPanel(
+                                store: repo.videoStore!,
+                                workout: w,
+                              ),
+                            ),
+                          ),
                         const SizedBox(height: 12),
                         if (staff)
                           Wrap(
@@ -595,7 +628,12 @@ class _PasswordFormState extends State<PasswordForm> {
 
 class WorkoutDialog extends StatefulWidget {
   final Record? workout;
-  final Future<void> Function(String day, String title, String instructions)
+  final Future<void> Function(
+    String day,
+    String title,
+    String instructions,
+    Record details,
+  )
   save;
   const WorkoutDialog({super.key, this.workout, required this.save});
   @override
@@ -603,6 +641,16 @@ class WorkoutDialog extends StatefulWidget {
 }
 
 class _WorkoutDialogState extends State<WorkoutDialog> {
+  late String kind = widget.workout?['kind'] ?? 'training';
+  late final location = TextEditingController(
+    text: widget.workout?['location'],
+  );
+  late final throwingPlan = TextEditingController(
+    text: widget.workout?['throwing_plan'],
+  );
+  late final startTime = TextEditingController(
+    text: (widget.workout?['start_time'] as String?)?.substring(0, 5),
+  );
   final form = GlobalKey<FormState>();
   late final title = TextEditingController(text: widget.workout?['title']);
   late final instructions = TextEditingController(
@@ -619,6 +667,9 @@ class _WorkoutDialogState extends State<WorkoutDialog> {
   void dispose() {
     title.dispose();
     instructions.dispose();
+    location.dispose();
+    throwingPlan.dispose();
+    startTime.dispose();
     super.dispose();
   }
 
@@ -656,6 +707,46 @@ class _WorkoutDialogState extends State<WorkoutDialog> {
                   icon: const Icon(Icons.calendar_month),
                   label: Text(date),
                 ),
+                DropdownButtonFormField<String>(
+                  initialValue: kind,
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de sesión',
+                  ),
+                  items: sessionKinds.entries
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e.key,
+                          child: Text(e.value),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: busy ? null : (v) => setState(() => kind = v!),
+                ),
+                if (kind == 'therapy')
+                  const Text(
+                    'Se mostrará un aviso de terapia agendada al atleta y a su entrenador.',
+                  ),
+                TextFormField(
+                  controller: location,
+                  maxLength: 300,
+                  decoration: const InputDecoration(
+                    labelText: 'Lugar',
+                    hintText: 'Campo, pista o consultorio',
+                  ),
+                  validator: (v) =>
+                      (v ?? '').trim().isEmpty ? 'Indica el lugar' : null,
+                ),
+                TextFormField(
+                  controller: startTime,
+                  decoration: const InputDecoration(
+                    labelText: 'Hora local (HH:mm)',
+                    hintText: '16:30',
+                  ),
+                  validator: (v) =>
+                      RegExp(r'^([01]\d|2[0-3]):[0-5]\d$').hasMatch(v ?? '')
+                      ? null
+                      : 'Usa una hora válida, por ejemplo 16:30',
+                ),
                 TextFormField(
                   controller: title,
                   maxLength: 150,
@@ -679,6 +770,21 @@ class _WorkoutDialogState extends State<WorkoutDialog> {
                       ? 'Agrega las indicaciones'
                       : null,
                 ),
+                if (kind != 'therapy')
+                  TextFormField(
+                    controller: throwingPlan,
+                    minLines: 2,
+                    maxLines: 5,
+                    maxLength: 5000,
+                    decoration: const InputDecoration(
+                      labelText: 'Plan de tiros',
+                      hintText: 'Cantidad, distancia, intensidad, tipos de lanzamiento y descansos',
+                    ),
+                    validator: (v) =>
+                        kind == 'bullpen' && (v ?? '').trim().isEmpty
+                        ? 'Agrega el plan de tiros del bullpen'
+                        : null,
+                  ),
                 if (error != null)
                   Text(error!, style: const TextStyle(color: Colors.red)),
               ],
@@ -701,7 +807,14 @@ class _WorkoutDialogState extends State<WorkoutDialog> {
                     error = null;
                   });
                   try {
-                    await widget.save(date, title.text, instructions.text);
+                    await widget.save(date, title.text, instructions.text, {
+                      'kind': kind,
+                      'location': location.text.trim(),
+                      'start_time': startTime.text,
+                      'throwing_plan': kind == 'therapy'
+                          ? ''
+                          : throwingPlan.text.trim(),
+                    });
                     if (context.mounted) Navigator.pop(context, true);
                   } catch (_) {
                     if (mounted) {

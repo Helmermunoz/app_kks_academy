@@ -1,8 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'video_store.dart';
+
 typedef Record = Map<String, dynamic>;
 
 abstract class AcademyRepository {
+  VideoStore? get videoStore;
   String? get userId;
   Stream<String?> get sessions;
   Future<void> signIn(String email, String password);
@@ -25,14 +28,17 @@ abstract class AcademyRepository {
     String? id,
     String day,
     String title,
-    String instructions,
-  );
+    String instructions, {
+    Record details = const {},
+  });
   Future<void> complete(String athlete, String workout, bool value);
 }
 
 class SupabaseAcademyRepository implements AcademyRepository {
   final SupabaseClient client;
   SupabaseAcademyRepository(this.client);
+  @override
+  VideoStore get videoStore => VideoStore(client);
   @override
   String? get userId => client.auth.currentUser?.id;
   @override
@@ -118,9 +124,11 @@ class SupabaseAcademyRepository implements AcademyRepository {
     String? id,
     String day,
     String title,
-    String instructions,
-  ) async {
+    String instructions, {
+    Record details = const {},
+  }) async {
     final values = {
+      ...details,
       'day': day,
       'title': title.trim(),
       'instructions': instructions.trim(),

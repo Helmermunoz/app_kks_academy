@@ -10,7 +10,11 @@ sesiones completadas. Para activar estas funciones, seguir [la guía de configur
 La migración y la función del servidor están incluidas, pero requieren un proyecto
 de Supabase configurado y desplegado. Sin configuración se puede explorar la demo.
 
-Los videos compartidos y las métricas de movimiento todavía están pendientes.
+Las sesiones incluyen tipo, lugar, horario y plan de tiros. Las citas de terapia
+pendientes muestran un aviso dentro de la app. Se pueden subir videos por sesión
+y consultar la galería de la academia con una cuenta activa. Requiere aplicar la
+migración `202609230003_session_details_videos.sql` en Supabase.
+Las métricas de movimiento todavía están pendientes.
 
 ## Ejecutar
 
@@ -34,10 +38,10 @@ flutter run -d chrome
 1. Crear el proyecto de Supabase y aplicar la configuración incluida.
 2. Verificar permisos con las pruebas SQL y cuentas reales de prueba.
 3. Incorporar posiciones principales/secundarias por atleta.
-4. Ampliar los entrenamientos con ejercicios estructurados, lanzamientos, distancias y ubicaciones.
+4. Ampliar el plan de tiros de texto con ejercicios y cantidades estructuradas.
 5. Conservar versiones e historial al modificar posiciones o programas; el prototipo todavía no lo implementa.
-6. Incorporar planes de alimentación y citas de terapia asignados por profesionales.
-7. Subir videos a almacenamiento privado, vinculados al alumno y sesión; persistir comentarios con marca de tiempo y autor.
+6. Incorporar planes de alimentación y asignación de profesionales a las citas de terapia.
+7. Agregar comentarios con marca de tiempo, moderación y análisis de movimiento a los videos guardados.
 8. Probar aislamiento de datos entre alumnos y permisos del entrenador antes de usar datos reales.
 
 No incluir credenciales ni videos de alumnos en Git. Configurar secretos en el entorno del servidor.

@@ -6,6 +6,8 @@ import 'package:app_kks_academy/academy_repository.dart';
 import 'package:app_kks_academy/main.dart';
 
 class FakeAcademy extends AcademyRepository {
+  @override
+  get videoStore => null;
   String? current = 'athlete-a';
   String role = 'athlete';
   bool failSave = false;
@@ -88,10 +90,12 @@ class FakeAcademy extends AcademyRepository {
     String? id,
     String day,
     String title,
-    String instructions,
-  ) async {
+    String instructions, {
+    Record details = const {},
+  }) async {
     if (failSave) throw Exception('offline');
     rows.add({
+      ...details,
       'id': 'new',
       'athlete_id': athlete,
       'day': day,
@@ -177,6 +181,14 @@ void main() {
     await tester.tap(find.text('Agregar entrenamiento'));
     await tester.pumpAndSettle();
     await tester.enterText(
+      find.widgetWithText(TextFormField, 'Lugar'),
+      'Campo principal',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Hora local (HH:mm)'),
+      '16:30',
+    );
+    await tester.enterText(
       find.widgetWithText(TextFormField, 'Nombre del entrenamiento'),
       'Movilidad',
     );
@@ -188,6 +200,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(repo.rows.last['athlete_id'], 'athlete-a');
     expect(repo.rows.last['title'], 'Movilidad');
+    expect(repo.rows.last['location'], 'Campo principal');
+    expect(repo.rows.last['start_time'], '16:30');
     expect(tester.takeException(), isNull);
   });
 
