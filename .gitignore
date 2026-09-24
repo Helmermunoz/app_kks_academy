@@ -52,5 +52,6 @@ app.*.map.json
 .env.*
 !.env.example
 .vscode/
+.tools/
 *.pem
 *.key

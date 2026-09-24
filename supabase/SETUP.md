@@ -56,6 +56,15 @@ los planes cuando Auth confirma el cambio. No cambiar manualmente el indicador
 
 ## 3. Publicar la función de creación de cuentas
 
+Para editar `supabase/functions/create-account/index.ts` en VS Code, instalar
+la extensión oficial `denoland.vscode-deno` y el ejecutable Deno. En los ajustes
+del workspace, configurar `"deno.enablePaths": ["./supabase/functions"]`.
+Si Deno no está en PATH, indicar su ruta en `deno.path`. El archivo usa Deno y
+una importación HTTPS: el analizador TypeScript estándar no reconoce ese entorno.
+Comprobar los tipos con `deno check supabase/functions/create-account/index.ts`;
+este comando no ejecuta la función ni crea cuentas. Después de configurar el
+editor, ejecutar `Developer: Reload Window` desde la paleta de comandos.
+
 Desde este directorio de proyecto, con Supabase CLI instalado:
 
 ```sh
