@@ -7,6 +7,7 @@ import 'academy_repository.dart';
 import 'session_details.dart';
 import 'video_panel.dart';
 import 'nutrition_page.dart';
+import 'development_page.dart';
 
 String roleLabel(String role) => switch (role) {
   'admin' => 'Administrador',
@@ -348,6 +349,32 @@ class _MemberPageState extends State<MemberPage> {
                 ),
               ),
               Text(roleLabel(profile!['role'])),
+              if (repo.developmentStore != null)
+                FilledButton.icon(
+                  icon: const Icon(Icons.insights),
+                  label: Text(
+                    staff
+                        ? 'Panel del entrenador'
+                        : 'Mi seguimiento y resultados',
+                  ),
+                  onPressed: () => Navigator.push<void>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DevelopmentPage(
+                        store: repo.developmentStore!,
+                        videos: repo.videoStore,
+                        staff: staff,
+                        initialAthlete: athlete,
+                        athletes: {
+                          for (final p in people.where(
+                            (p) => p['role'] == 'athlete',
+                          ))
+                            p['id'] as String: p['name'] as String,
+                        },
+                      ),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 20),
               if (admin) ...[
                 Align(

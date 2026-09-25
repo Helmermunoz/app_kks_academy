@@ -39,6 +39,17 @@ flutter run -d chrome
 
 **Es una demostración:** no hay autenticación, permisos reales ni base de datos. Videos, comentarios y cambios se pierden al recargar. Los archivos de video no se suben a un servidor. El cambio de perfil no ofrece seguridad.
 
+## Seguimiento del atleta
+
+El panel del entrenador reúne sesiones, cumplimiento, reportes de molestias y videos
+pendientes de revisión; el atleta dispone de su propio seguimiento. Permite filtrar
+por fechas y atleta, registrar resultados de bullpen (conteos, strikes y velocidad
+manual en mph), esfuerzo y observaciones, y consultar correcciones privadas del
+entrenador con un segundo de referencia del video.
+
+Requiere aplicar `supabase/migrations/202609240005_development.sql` una vez después
+de 001–004. Instrucciones y límites en `supabase/SETUP.md`.
+
 ## Próximas etapas
 
 1. Crear el proyecto de Supabase y aplicar la configuración incluida.
@@ -47,7 +58,7 @@ flutter run -d chrome
 4. Ampliar el plan de tiros de texto con ejercicios y cantidades estructuradas.
 5. Conservar versiones e historial al modificar posiciones o programas; el prototipo todavía no lo implementa.
 6. Incorporar planes de alimentación y asignación de profesionales a las citas de terapia.
-7. Agregar comentarios con marca de tiempo, moderación y análisis de movimiento a los videos guardados.
+7. Ampliar la revisión privada de videos con conversaciones, moderación y análisis de movimiento.
 8. Probar aislamiento de datos entre alumnos y permisos del entrenador antes de usar datos reales.
 
 No incluir credenciales ni videos de alumnos en Git. Configurar secretos en el entorno del servidor.

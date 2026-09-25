@@ -108,6 +108,35 @@ administradores desde la app. Las variables internas `SUPABASE_URL` y
 `SUPABASE_SERVICE_ROLE_KEY` son proporcionadas por Supabase a la función.
 La clave de servicio **nunca** se coloca en Flutter ni en variables de compilación.
 
+## Seguimiento, bullpen y revisión de videos (actualización 005)
+
+Después de aplicar 001–004, ejecutar **una vez y completo**
+`migrations/202609240005_development.sql` en SQL Editor. Debe terminar con
+`Success. No rows returned`. No sustituye ni requiere volver a ejecutar las anteriores.
+Actualizar la web después del despliegue en GitHub Pages.
+
+El administrador/entrenador verá **Panel del entrenador** y el atleta
+**Mi seguimiento y resultados**. El período inicial abarca los últimos 30 días
+y los próximos 7; se puede cambiar el rango y filtrar por atleta, sesiones sin
+completar, molestias o videos pendientes de revisión.
+
+- Los resultados son privados: atleta propietario, entrenador asignado y administrador.
+- Atleta y equipo pueden registrar/editar resultados, con atribución y fecha del servidor.
+- La revisión de video es privada y solo el equipo puede escribirla. El atleta la consulta.
+  La comunidad conserva acceso al video, sin acceso al reporte ni a la revisión.
+- Guardar resultados no marca automáticamente la sesión como completada.
+- Los conteos y velocidad se introducen manualmente; velocidad en mph, solo con radar.
+  Las cantidades por tipo se escriben en texto. No hay captura automática ni mapa de lanzamientos.
+- Las molestias aparecen como aviso en el panel al actualizar. No hay notificaciones push ni diagnóstico.
+- Se guarda una revisión actual por video, con estado, observación y segundo de referencia.
+  No incluye comparación simultánea, dibujo, análisis de esqueleto ni historial de ediciones.
+
+Validación manual: guardar un bullpen, recargar y confirmar persistencia; añadir una
+revisión como entrenador y consultarla como atleta; comprobar que otro atleta solo
+ve el video comunitario. Quitar la asignación del entrenador y verificar que deja
+de leer los reportes. `tests/development.sql` contiene pruebas RLS para un proyecto
+de prueba; no sustituye probar Auth y reproducción con cuentas reales.
+
 ## 4. Conectar Flutter
 
 Copiar Project URL y la clave **publishable** desde el panel Connect del proyecto.
