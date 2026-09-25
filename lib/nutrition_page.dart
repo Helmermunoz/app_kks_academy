@@ -365,7 +365,10 @@ class _NutritionFormState extends State<NutritionForm> {
                   );
                 }),
                 if (error != null)
-                  Text(error!, style: const TextStyle(color: Colors.red)),
+                  Text(
+                    error!,
+                    style: const TextStyle(color: Color(0xffffa4ad)),
+                  ),
               ],
             ),
           ),
@@ -498,7 +501,7 @@ class _TrendPainter extends CustomPainter {
         .millisecondsSinceEpoch;
     final end = DateTime.parse(rows.last['measured_on']).millisecondsSinceEpoch;
     final pen = Paint()
-      ..color = const Color(0xff126755)
+      ..color = const Color(0xff96c4ff)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
     final path = Path();
@@ -522,7 +525,7 @@ class _TrendPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(x, y),
         4,
-        Paint()..color = const Color(0xff126755),
+        Paint()..color = const Color(0xff96c4ff),
       );
     }
     canvas.drawPath(path, pen);

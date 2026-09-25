@@ -35,6 +35,13 @@ una hora: volver a abrir el video genera otra. Cada listado muestra los últimos
 si una carga se interrumpe puede quedar un archivo sin ficha, que debe revisarse
 en Storage. No hay carga reanudable, comentarios ni análisis del esqueleto todavía.
 
+Si la galería informa `PGRST205`, ejecutar la consulta de solo lectura
+`tests/video_setup_diagnostic.sql` en SQL Editor. Si los tres valores son falsos,
+falta aplicar `003`: ejecutarla completa una sola vez. Si todo existe pero la API
+no encuentra la tabla, ejecutar `notify pgrst, 'reload schema';` y volver a intentar.
+Si el resultado es parcial, revisar el esquema antes de repetir la migración.
+No conceder acceso a `anon` para resolver este error: los videos requieren una cuenta.
+
 En Authentication, desactivar el registro público de usuarios. Las cuentas de
 atletas y entrenadores se crearán desde el panel del administrador de esta app.
 No se usan metadatos editables del usuario para decidir permisos.

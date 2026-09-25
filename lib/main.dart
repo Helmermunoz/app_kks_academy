@@ -1,4 +1,5 @@
 import 'academy_brand.dart';
+import 'academy_theme.dart';
 import 'academy_portal.dart';
 import 'academy_repository.dart';
 
@@ -40,11 +41,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: 'KKs Academy',
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff126755)),
-      scaffoldBackgroundColor: const Color(0xffdcefea),
-      useMaterial3: true,
-    ),
+    theme: academyTheme(),
     home: demo
         ? const AcademyHome()
         : repository != null
@@ -133,7 +130,7 @@ class _AcademyHomeState extends State<AcademyHome> {
 
   Widget panel(String title, IconData icon, List<Widget> children) => Card(
     elevation: 0,
-    color: Colors.white,
+    color: const Color(0xff132238),
     margin: const EdgeInsets.only(bottom: 16),
     child: Padding(
       padding: const EdgeInsets.all(24),
@@ -142,7 +139,7 @@ class _AcademyHomeState extends State<AcademyHome> {
         children: [
           Row(
             children: [
-              Icon(icon, color: const Color(0xff126755)),
+              Icon(icon, color: const Color(0xff96c4ff)),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -167,7 +164,7 @@ class _AcademyHomeState extends State<AcademyHome> {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: Colors.grey.shade600),
+        Icon(icon, size: 20, color: const Color(0xffb8c7dc)),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -175,7 +172,7 @@ class _AcademyHomeState extends State<AcademyHome> {
             children: [
               Text(
                 title,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                style: TextStyle(fontSize: 12, color: const Color(0xffb8c7dc)),
               ),
               const SizedBox(height: 3),
               Text(
@@ -216,7 +213,7 @@ class _AcademyHomeState extends State<AcademyHome> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xffffefcf),
+                      color: const Color(0xff3b2d18),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
@@ -234,7 +231,7 @@ class _AcademyHomeState extends State<AcademyHome> {
                         style: TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xff123d34),
+                          color: Color(0xfff4f7fc),
                         ),
                       ),
                       Chip(
@@ -252,7 +249,10 @@ class _AcademyHomeState extends State<AcademyHome> {
                   const SizedBox(height: 6),
                   Text(
                     'Hola, Alex. Cada sesión cuenta.',
-                    style: TextStyle(fontSize: 18, color: Colors.grey.shade700),
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: const Color(0xffb8c7dc),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   if (coach)
@@ -294,7 +294,7 @@ class _AcademyHomeState extends State<AcademyHome> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
-                      color: const Color(0xff123d34),
+                      color: const Color(0xff17365a),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Column(
@@ -303,7 +303,7 @@ class _AcademyHomeState extends State<AcademyHome> {
                         const Text(
                           'TU PROGRAMA PERSONAL',
                           style: TextStyle(
-                            color: Color(0xffb9e777),
+                            color: Color(0xffffa4ad),
                             letterSpacing: 2,
                             fontWeight: FontWeight.bold,
                           ),
@@ -333,7 +333,7 @@ class _AcademyHomeState extends State<AcademyHome> {
                         const SizedBox(height: 8),
                         LinearProgressIndicator(
                           value: completed.length / 5,
-                          color: const Color(0xffb9e777),
+                          color: const Color(0xffffa4ad),
                           backgroundColor: Colors.white24,
                           minHeight: 6,
                         ),
@@ -468,7 +468,9 @@ class _AcademyHomeState extends State<AcademyHome> {
                               const SizedBox(height: 10),
                               Text(
                                 'Aquí aparecerán fecha, hora, especialista y lugar de tu próxima sesión.',
-                                style: TextStyle(color: Colors.grey.shade700),
+                                style: TextStyle(
+                                  color: const Color(0xffb8c7dc),
+                                ),
                               ),
                             ],
                           ),
@@ -491,7 +493,7 @@ class _AcademyHomeState extends State<AcademyHome> {
                   const SizedBox(height: 12),
                   const Text(
                     'KKs Academy · Entrena con un plan. Crece a tu ritmo.',
-                    style: TextStyle(color: Color(0xff526b60)),
+                    style: TextStyle(color: Color(0xffb8c7dc)),
                   ),
                   const SizedBox(height: 24),
                 ],

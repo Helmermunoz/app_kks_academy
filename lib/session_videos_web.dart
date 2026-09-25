@@ -81,7 +81,7 @@ class _SessionVideosState extends State<SessionVideos> {
   @override
   Widget build(BuildContext context) => Card(
     elevation: 0,
-    color: Colors.white,
+    color: const Color(0xff132238),
     child: Padding(
       padding: const EdgeInsets.all(24),
       child: Column(

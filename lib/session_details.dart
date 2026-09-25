@@ -55,7 +55,7 @@ class TherapyNotice extends StatelessWidget {
         .toList();
     if (upcoming.isEmpty) return const SizedBox.shrink();
     return Card(
-      color: const Color(0xffffefcf),
+      color: const Color(0xff3b2d18),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

@@ -4,6 +4,21 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'video_file.dart';
 
+String videoLoadError(Object error) {
+  if (error is PostgrestException) {
+    if (error.code == 'PGRST205' || error.code == '42P01') {
+      return 'El apartado de videos aún no está habilitado. Pide al administrador completar su configuración. Código: ${error.code}.';
+    }
+    if (error.code == '42501') {
+      return 'Tu cuenta no tiene permiso para consultar los videos. Contacta al administrador. Código: 42501.';
+    }
+    if (error.code == 'PGRST301' || error.code == 'PGRST303') {
+      return 'Tu sesión necesita renovarse. Cierra sesión y vuelve a entrar.';
+    }
+  }
+  return 'No se pudieron cargar los videos. Revisa tu conexión y vuelve a intentar.';
+}
+
 class VideoStore {
   final SupabaseClient client;
   VideoStore(this.client);

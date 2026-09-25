@@ -10,10 +10,10 @@ class AcademyBackground extends StatelessWidget {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0xffb9eee5),
-          Color(0xffe5f1ff),
-          Color(0xffdcebd2),
-          Color(0xffffe7d5),
+          Color(0xff080f1d),
+          Color(0xff101f35),
+          Color(0xff0c1728),
+          Color(0xff080f1d),
         ],
         stops: [0, .4, .75, 1],
       ),
@@ -23,12 +23,12 @@ class AcademyBackground extends StatelessWidget {
         const Positioned(
           top: -95,
           right: -90,
-          child: _Orb(color: Color(0x22007889), size: 330),
+          child: _Orb(color: Color(0x18194c8f), size: 330),
         ),
         const Positioned(
           bottom: -110,
           left: -100,
-          child: _Orb(color: Color(0x2269ad35), size: 370),
+          child: _Orb(color: Color(0x18c52e42), size: 370),
         ),
         Positioned.fill(child: CustomPaint(painter: _FieldLines())),
         child,
@@ -53,7 +53,7 @@ class _FieldLines extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0x12003558)
+      ..color = const Color(0x207b9fc9)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     final center = Offset(size.width * .85, size.height * .45);
@@ -84,7 +84,7 @@ class AcademyPlayers extends StatelessWidget {
         padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xff071e3b), Color(0xff005d69), Color(0xff008c82)],
+            colors: [Color(0xff071e3b), Color(0xff122f55), Color(0xff213d60)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -104,11 +104,11 @@ class AcademyPlayers extends StatelessWidget {
               spacing: 10,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Icon(Icons.sports_baseball, color: Color(0xffbcf074), size: 30),
+                Icon(Icons.sports_baseball, color: Color(0xffffa4ad), size: 30),
                 Text(
                   'KKs ACADEMY / BÉISBOL',
                   style: TextStyle(
-                    color: Color(0xffbcf074),
+                    color: Color(0xffffa4ad),
                     fontWeight: FontWeight.w800,
                     letterSpacing: 2,
                   ),
@@ -128,7 +128,7 @@ class AcademyPlayers extends StatelessWidget {
             const SizedBox(height: 10),
             const Text(
               'Marineros de Seattle',
-              style: TextStyle(color: Color(0xffb6ede4), fontSize: 19),
+              style: TextStyle(color: Color(0xffb8c7dc), fontSize: 19),
             ),
             const SizedBox(height: 24),
             const Text(
@@ -143,7 +143,7 @@ class AcademyPlayers extends StatelessWidget {
             const Text(
               'Entrenamiento, recuperación y seguimiento en un mismo lugar. Para jugadores de todas las posiciones.',
               style: TextStyle(
-                color: Color(0xffd9efef),
+                color: Color(0xffd2def0),
                 fontSize: 16,
                 height: 1.5,
               ),
@@ -157,7 +157,7 @@ class AcademyPlayers extends StatelessWidget {
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w800,
-          color: Color(0xff092b47),
+          color: Color(0xfff4f7fc),
         ),
       ),
       const SizedBox(height: 12),
@@ -208,7 +208,7 @@ class AcademyPlayers extends StatelessWidget {
     width: width,
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: const Color(0xff132238),
       borderRadius: BorderRadius.circular(18),
       border: Border(top: BorderSide(color: color, width: 5)),
     ),
@@ -226,13 +226,16 @@ class AcademyPlayers extends StatelessWidget {
           style: const TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w800,
-            color: Color(0xff092b47),
+            color: Color(0xfff4f7fc),
           ),
         ),
         const SizedBox(height: 6),
         Text(
           team,
-          style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: Color(0xffb8c7dc),
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     ),

@@ -38,11 +38,9 @@ class _VideoPanelState extends State<VideoPanel> {
     try {
       final data = await widget.store.list(workoutId: widget.workout?['id']);
       if (mounted) setState(() => rows = data);
-    } catch (_) {
+    } catch (failure) {
       if (mounted) {
-        setState(
-          () => error = 'No se pudieron cargar los videos. Revisa la conexión y la configuración de videos en Supabase.',
-        );
+        setState(() => error = videoLoadError(failure));
       }
     } finally {
       if (mounted) setState(() => loading = false);
@@ -118,7 +116,7 @@ class _VideoPanelState extends State<VideoPanel> {
                 ),
               ],
               if (error != null)
-                Text(error!, style: const TextStyle(color: Colors.red)),
+                Text(error!, style: const TextStyle(color: Color(0xffffa4ad))),
               if (loading || uploading) const LinearProgressIndicator(),
               if (!loading && rows.isEmpty && error == null)
                 const Padding(

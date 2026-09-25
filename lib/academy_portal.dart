@@ -160,7 +160,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 24),
                   if (error != null)
-                    Text(error!, style: const TextStyle(color: Colors.red)),
+                    Text(
+                      error!,
+                      style: const TextStyle(color: Color(0xffffa4ad)),
+                    ),
                   FilledButton(
                     onPressed: busy ? null : login,
                     child: Text(busy ? 'Entrando…' : 'Entrar'),
@@ -496,7 +499,7 @@ class _MemberPageState extends State<MemberPage> {
                       children: [
                         Text(
                           w['day'],
-                          style: const TextStyle(color: Color(0xff126755)),
+                          style: const TextStyle(color: Color(0xff96c4ff)),
                         ),
                         Text(
                           w['title'],
@@ -612,7 +615,7 @@ class _PasswordFormState extends State<PasswordForm> {
               v != password.text ? 'Las contraseñas no coinciden' : null,
         ),
         if (error != null)
-          Text(error!, style: const TextStyle(color: Colors.red)),
+          Text(error!, style: const TextStyle(color: Color(0xffffa4ad))),
         const SizedBox(height: 16),
         FilledButton(
           onPressed: busy
@@ -726,6 +729,7 @@ class _WorkoutDialogState extends State<WorkoutDialog> {
                 ),
                 DropdownButtonFormField<String>(
                   initialValue: kind,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Tipo de sesión',
                   ),
@@ -803,7 +807,10 @@ class _WorkoutDialogState extends State<WorkoutDialog> {
                         : null,
                   ),
                 if (error != null)
-                  Text(error!, style: const TextStyle(color: Colors.red)),
+                  Text(
+                    error!,
+                    style: const TextStyle(color: Color(0xffffa4ad)),
+                  ),
               ],
             ),
           ),
@@ -906,6 +913,7 @@ class _AccountDialogState extends State<AccountDialog> {
                 ),
                 DropdownButtonFormField<String>(
                   initialValue: role,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Tipo de cuenta',
                   ),
@@ -934,7 +942,10 @@ class _AccountDialogState extends State<AccountDialog> {
                   'Entrega el correo y la contraseña temporal directamente al usuario. Tendrá que cambiarla al entrar.',
                 ),
                 if (error != null)
-                  Text(error!, style: const TextStyle(color: Colors.red)),
+                  Text(
+                    error!,
+                    style: const TextStyle(color: Color(0xffffa4ad)),
+                  ),
               ],
             ),
           ),
