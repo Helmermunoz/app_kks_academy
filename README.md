@@ -70,3 +70,40 @@ flutter analyze
 flutter test
 flutter build web
 ```
+
+## Deployment (GitHub Pages)
+
+Production URL: https://helmermunoz.github.io/app_kks_academy/
+
+The existing `.github/workflows/pages.yml` workflow, **Publish Flutter web**,
+starts automatically on pushes to `main`, or manually from Actions using
+**Run workflow** with branch `main`. It installs Flutter 3.47.5, runs dependency
+resolution, analysis and tests, then builds and uploads `build/web` and deploys
+that artifact to GitHub Pages. `build/` is intentionally ignored by Git;
+a local `flutter build web` does not publish the website.
+
+The release build uses `--base-href /app_kks_academy/` and the existing repository
+variables `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` as Dart defines.
+Do not change these variables to troubleshoot a stale browser view.
+A local build without those defines shows the setup/demo entry rather than
+validating the configured production login.
+
+For an existing site, verify settings before changing them. The workflow expects
+**Settings > Pages > Build and deployment > Source: GitHub Actions**.
+No settings change is needed when the workflow's deployment job already succeeds.
+After pushing, open **Actions > Publish Flutter web**, select the run for the
+pushed commit, and confirm both `build` and `deploy` succeed. Open the deployment
+URL from the `github-pages` environment.
+
+If the screen appears old, open the production URL in a private/incognito window,
+then sign in as an athlete to verify **Mi entrenamiento**, the date selector and
+**Hoy**. **Explorar demostración** opens a separate example screen whose weekly
+layout is unchanged. Try a hard reload (`Ctrl+Shift+R`) in the regular browser.
+The currently deployed Flutter service worker unregisters itself; it does not
+cache the app. An older browser registration can still require an update:
+in Chrome/Edge, open **Developer Tools > Application > Service workers**, locate
+the registration for this site's scope and click **Update**, then reload.
+If it persists, unregister only that site's worker and reload. Avoid clearing all
+site storage, which would also remove the local sign-in session.
+GitHub Pages currently serves these assets with a ten-minute cache lifetime;
+a fresh deployment may take time to appear through browser/CDN caches.
