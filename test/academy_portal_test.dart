@@ -21,7 +21,7 @@ class FakeAcademy extends AcademyRepository {
     {
       'id': 'workout-a',
       'athlete_id': 'athlete-a',
-      'day': '2026-09-23',
+      'day': DateTime.now().toIso8601String().substring(0, 10),
       'title': 'Control de lanzamiento',
       'instructions': '3 series de 10 repeticiones. Descansa 60 segundos.',
     },
@@ -114,6 +114,69 @@ void main() {
   });
   tearDown(() async {
     await repo.events.close();
+  });
+
+  testWidgets('Athlete agenda shows only today and can select another day', (
+    tester,
+  ) async {
+    final tomorrow = DateUtils.dateOnly(DateTime.now())
+        .add(const Duration(days: 1));
+    repo.rows.add({
+      'id': 'tomorrow',
+      'athlete_id': 'athlete-a',
+      'day': tomorrow.toIso8601String().substring(0, 10),
+      'title': 'Tomorrow therapy',
+      'instructions': 'Recovery',
+      'kind': 'therapy',
+    });
+    await tester.pumpWidget(MyApp(repository: repo));
+    await tester.pumpAndSettle();
+    expect(find.text('Control de lanzamiento'), findsOneWidget);
+    expect(find.text('Tomorrow therapy'), findsNothing);
+    expect(find.text('Terapia agendada'), findsNothing);
+    await tester.ensureVisible(find.byIcon(Icons.calendar_today));
+    await tester.tap(find.byIcon(Icons.calendar_today));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Switch to input'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextField).last,
+      '${tomorrow.month}/${tomorrow.day}/${tomorrow.year}',
+    );
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(find.text('Control de lanzamiento'), findsNothing);
+    expect(find.text('Tomorrow therapy'), findsOneWidget);
+    await tester.ensureVisible(find.text('Completé mi entrenamiento'));
+    await tester.tap(find.text('Completé mi entrenamiento'));
+    await tester.pumpAndSettle();
+    expect(repo.done, contains('tomorrow'));
+    expect(find.text('Tomorrow therapy'), findsOneWidget);
+    await tester.ensureVisible(find.text('Hoy', skipOffstage: false));
+    await tester.tap(find.text('Hoy'));
+    await tester.pumpAndSettle();
+    expect(find.text('Control de lanzamiento'), findsOneWidget);
+    expect(find.text('Tomorrow therapy'), findsNothing);
+  });
+
+  testWidgets('Athlete gets an empty state for a day without training', (
+    tester,
+  ) async {
+    repo.rows.first['day'] = '2000-01-01';
+    await tester.pumpWidget(MyApp(repository: repo));
+    await tester.pumpAndSettle();
+    expect(find.text('No hay entrenamientos para este día.'), findsOneWidget);
+    expect(find.text('Control de lanzamiento'), findsNothing);
+  });
+
+  testWidgets('Coach still sees workouts across dates', (tester) async {
+    repo.role = 'coach';
+    repo.current = 'coach-a';
+    repo.rows.first['day'] = '2000-01-01';
+    await tester.pumpWidget(MyApp(repository: repo));
+    await tester.pumpAndSettle();
+    expect(find.text('Control de lanzamiento'), findsOneWidget);
+    expect(find.byIcon(Icons.calendar_today), findsNothing);
   });
 
   testWidgets(

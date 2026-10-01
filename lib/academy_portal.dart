@@ -197,6 +197,42 @@ class _MemberPageState extends State<MemberPage> {
   String? athlete, error;
   bool loading = true, busy = false;
   int request = 0;
+  DateTime selectedDate = DateTime.now();
+  List<Record> get visibleWorkouts => staff
+      ? workouts
+      : workouts.where((workout) {
+          final day = DateTime.parse(workout['day'] as String);
+          return DateUtils.isSameDay(day, selectedDate);
+        }).toList();
+
+  Future<void> selectTrainingDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (date != null && mounted) setState(() => selectedDate = date);
+  }
+
+  Widget trainingDateControls(BuildContext context) => Wrap(
+    crossAxisAlignment: WrapCrossAlignment.center,
+    spacing: 8,
+    children: [
+      OutlinedButton.icon(
+        onPressed: selectTrainingDate,
+        icon: const Icon(Icons.calendar_today),
+        label: Text(
+          '${DateUtils.isSameDay(selectedDate, DateTime.now()) ? 'Hoy, ' : ''}'
+          '${MaterialLocalizations.of(context).formatFullDate(selectedDate)}',
+        ),
+      ),
+      TextButton(
+        onPressed: () => setState(() => selectedDate = DateTime.now()),
+        child: const Text('Hoy'),
+      ),
+    ],
+  );
   AcademyRepository get repo => widget.repository;
   bool get staff => profile?['role'] == 'admin' || profile?['role'] == 'coach';
   bool get admin => profile?['role'] == 'admin';
@@ -462,8 +498,8 @@ class _MemberPageState extends State<MemberPage> {
                   ),
                 ),
               const SizedBox(height: 20),
-              const Text(
-                'Entrenamientos personales',
+              Text(
+                staff ? 'Entrenamientos personales' : 'Mi entrenamiento',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               Text(
@@ -472,6 +508,7 @@ class _MemberPageState extends State<MemberPage> {
                     : 'Este plan está asignado a tu cuenta.',
               ),
               const SizedBox(height: 12),
+              if (!staff) trainingDateControls(context),
               if (staff && athlete != null)
                 Align(
                   alignment: Alignment.centerLeft,
@@ -486,10 +523,25 @@ class _MemberPageState extends State<MemberPage> {
                   padding: EdgeInsets.all(24),
                   child: Text('Todavía no tienes atletas asignados.'),
                 )
-              else if (workouts.isEmpty)
+              else if (staff && workouts.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(24),
                   child: Text('Todavía no hay entrenamientos asignados.'),
+                ),
+              if (!staff && visibleWorkouts.isEmpty)
+                const Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        Icon(Icons.event_available, size: 36),
+                        SizedBox(height: 12),
+                        Text('No hay entrenamientos para este día.'),
+                        SizedBox(height: 4),
+                        Text('Puedes consultar otra fecha en el calendario.'),
+                      ],
+                    ),
+                  ),
                 ),
               if (athlete != null && repo.nutritionStore != null)
                 OutlinedButton.icon(
@@ -507,7 +559,7 @@ class _MemberPageState extends State<MemberPage> {
                     ),
                   ),
                 ),
-              TherapyNotice(sessions: workouts, completed: completed),
+              TherapyNotice(sessions: visibleWorkouts, completed: completed),
               if (repo.videoStore != null)
                 OutlinedButton.icon(
                   icon: const Icon(Icons.video_library),
@@ -517,7 +569,7 @@ class _MemberPageState extends State<MemberPage> {
                     builder: (_) => VideoPanel(store: repo.videoStore!),
                   ),
                 ),
-              ...workouts.map(
+              ...visibleWorkouts.map(
                 (w) => Card(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
@@ -574,6 +626,11 @@ class _MemberPageState extends State<MemberPage> {
                           CheckboxListTile(
                             contentPadding: EdgeInsets.zero,
                             title: const Text('Completé mi entrenamiento'),
+                            subtitle: Text(
+                              completed.contains(w['id'])
+                                  ? 'Completado'
+                                  : 'Pendiente',
+                            ),
                             value: completed.contains(w['id']),
                             onChanged: busy
                                 ? null
