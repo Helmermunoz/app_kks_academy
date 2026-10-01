@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'academy_brand.dart';
 import 'academy_repository.dart';
 import 'session_details.dart';
+import 'training_calendar.dart';
 import 'video_panel.dart';
 import 'nutrition_page.dart';
 import 'development_page.dart';
@@ -205,34 +206,6 @@ class _MemberPageState extends State<MemberPage> {
           return DateUtils.isSameDay(day, selectedDate);
         }).toList();
 
-  Future<void> selectTrainingDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (date != null && mounted) setState(() => selectedDate = date);
-  }
-
-  Widget trainingDateControls(BuildContext context) => Wrap(
-    crossAxisAlignment: WrapCrossAlignment.center,
-    spacing: 8,
-    children: [
-      OutlinedButton.icon(
-        onPressed: selectTrainingDate,
-        icon: const Icon(Icons.calendar_today),
-        label: Text(
-          '${DateUtils.isSameDay(selectedDate, DateTime.now()) ? 'Hoy, ' : ''}'
-          '${MaterialLocalizations.of(context).formatFullDate(selectedDate)}',
-        ),
-      ),
-      TextButton(
-        onPressed: () => setState(() => selectedDate = DateTime.now()),
-        child: const Text('Hoy'),
-      ),
-    ],
-  );
   AcademyRepository get repo => widget.repository;
   bool get staff => profile?['role'] == 'admin' || profile?['role'] == 'coach';
   bool get admin => profile?['role'] == 'admin';
@@ -508,7 +481,17 @@ class _MemberPageState extends State<MemberPage> {
                     : 'Este plan está asignado a tu cuenta.',
               ),
               const SizedBox(height: 12),
-              if (!staff) trainingDateControls(context),
+              if (!staff)
+                TrainingCalendar(
+                  selectedDate: selectedDate,
+                  workoutDays: {
+                    for (final workout in workouts)
+                      DateUtils.dateOnly(
+                        DateTime.parse(workout['day'] as String),
+                      ),
+                  },
+                  onSelected: (date) => setState(() => selectedDate = date),
+                ),
               if (staff && athlete != null)
                 Align(
                   alignment: Alignment.centerLeft,

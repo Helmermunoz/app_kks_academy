@@ -134,17 +134,23 @@ void main() {
     expect(find.text('Control de lanzamiento'), findsOneWidget);
     expect(find.text('Tomorrow therapy'), findsNothing);
     expect(find.text('Terapia agendada'), findsNothing);
-    await tester.ensureVisible(find.byIcon(Icons.calendar_today));
-    await tester.tap(find.byIcon(Icons.calendar_today));
+    await tester.ensureVisible(find.text('Ver mes ›'));
+    await tester.tap(find.text('Ver mes ›'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Switch to input'));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byType(TextField).last,
-      '${tomorrow.month}/${tomorrow.day}/${tomorrow.year}',
+    expect(find.byKey(const ValueKey('training-month-grid')), findsOneWidget);
+    if (tomorrow.month != DateTime.now().month) {
+      await tester.tap(find.byTooltip('Mes siguiente'));
+      await tester.pumpAndSettle();
+    }
+    final day = find.byKey(
+      ValueKey(
+        'training-day-${tomorrow.year}-${tomorrow.month}-${tomorrow.day}',
+      ),
     );
-    await tester.tap(find.text('OK'));
+    await tester.ensureVisible(day);
+    await tester.tap(day);
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('training-month-grid')), findsNothing);
     expect(find.text('Control de lanzamiento'), findsNothing);
     expect(find.text('Tomorrow therapy'), findsOneWidget);
     await tester.ensureVisible(find.text('Completé mi entrenamiento'));
@@ -157,6 +163,46 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Control de lanzamiento'), findsOneWidget);
     expect(find.text('Tomorrow therapy'), findsNothing);
+  });
+
+  testWidgets('Weekly day selection updates workouts and the empty state', (
+    tester,
+  ) async {
+    final today = DateUtils.dateOnly(DateTime.now());
+    final other = DateTime(
+      today.year,
+      today.month,
+      today.day + (today.weekday == DateTime.monday ? 1 : 1 - today.weekday),
+    );
+    await tester.pumpWidget(MyApp(repository: repo));
+    await tester.pumpAndSettle();
+    final day = find.byKey(
+      ValueKey('training-day-${other.year}-${other.month}-${other.day}'),
+    );
+    await tester.ensureVisible(day);
+    await tester.tap(day);
+    await tester.pumpAndSettle();
+    expect(find.text('Control de lanzamiento'), findsNothing);
+    expect(
+      find.text('No hay entrenamientos para este d\u00eda.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Hoy'));
+    await tester.pumpAndSettle();
+    expect(find.text('Control de lanzamiento'), findsOneWidget);
+  });
+
+  testWidgets('Admin keeps all dates and has no athlete calendar', (
+    tester,
+  ) async {
+    repo.role = 'admin';
+    repo.current = 'admin-a';
+    repo.rows.first['day'] = '2000-01-01';
+    await tester.pumpWidget(MyApp(repository: repo));
+    await tester.pumpAndSettle();
+    expect(find.text('Control de lanzamiento'), findsOneWidget);
+    expect(find.text('Ver mes ›'), findsNothing);
+    expect(find.text('Crear cuenta'), findsOneWidget);
   });
 
   testWidgets('Athlete gets an empty state for a day without training', (
@@ -176,7 +222,7 @@ void main() {
     await tester.pumpWidget(MyApp(repository: repo));
     await tester.pumpAndSettle();
     expect(find.text('Control de lanzamiento'), findsOneWidget);
-    expect(find.byIcon(Icons.calendar_today), findsNothing);
+    expect(find.text('Ver mes ›'), findsNothing);
   });
 
   testWidgets(
