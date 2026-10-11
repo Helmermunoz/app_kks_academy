@@ -42,11 +42,13 @@ String? validateMeasurement(String key, String text, {double? weight}) {
 class NutritionPage extends StatefulWidget {
   final NutritionStore store;
   final String athlete, athleteName;
+  final bool readOnly;
   const NutritionPage({
     super.key,
     required this.store,
     required this.athlete,
     required this.athleteName,
+    this.readOnly = false,
   });
   @override
   State<NutritionPage> createState() => _NutritionPageState();
@@ -180,20 +182,22 @@ class _NutritionPageState extends State<NutritionPage> {
                                   '${e.value}: ${(profile?[e.key] as String? ?? '').isEmpty ? 'Sin registrar' : profile![e.key]}',
                                 ),
                               ),
-                              OutlinedButton(
-                                onPressed: () => edit(false),
-                                child: const Text('Editar perfil'),
-                              ),
+                              if (!widget.readOnly)
+                                OutlinedButton(
+                                  onPressed: () => edit(false),
+                                  child: const Text('Editar perfil'),
+                                ),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      FilledButton.icon(
-                        onPressed: () => edit(true),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Registrar medición InBody'),
-                      ),
+                      if (!widget.readOnly)
+                        FilledButton.icon(
+                          onPressed: () => edit(true),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Registrar medición InBody'),
+                        ),
                       const SizedBox(height: 12),
                       const Text(
                         'Copia los valores del reporte. El metabolismo basal no es una meta de calorías diarias. InBody no se envía a la IA. Las propuestas de comidas, cuando estén habilitadas, requieren consentimiento y revisión profesional.',

@@ -20,7 +20,7 @@ for (const file of (await readdir('supabase/migrations')).filter(f=>f.endsWith('
   await db.exec(await readFile(`supabase/migrations/${file}`,'utf8'));
   console.log(`Migration OK: ${file}`);
 }
-for (const file of ['access.sql','session_videos.sql','nutrition.sql','development.sql','nutrition_proposals.sql']) {
+for (const file of ['access.sql','session_videos.sql','nutrition.sql','development.sql','nutrition_proposals.sql','pilot_roles.sql']) {
   await db.exec(await readFile(`supabase/tests/${file}`,'utf8'));
   console.log(`SQL tests OK: ${file}`);
 }

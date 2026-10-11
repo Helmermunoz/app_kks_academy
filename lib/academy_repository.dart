@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'account_identity.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -67,7 +68,7 @@ class SupabaseAcademyRepository implements AcademyRepository {
   @override
   Future<void> signIn(String email, String password) async {
     await client.auth.signInWithPassword(
-      email: email.trim(),
+      email: accountEmail(email),
       password: password,
     );
   }
