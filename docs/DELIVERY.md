@@ -27,7 +27,7 @@ Auth por contraseña, roles/coach asignado, calendario diario/semanal/mensual, s
 | Tests baseline | 29 pasaron |
 | Análisis después de mejoras | Sin incidencias |
 | Tests después de propuestas | 32 pasaron; incluye mock, revisión y sesión estructurada |
-| Tests finales con limpieza de rutas privadas | 33 pasaron |
+| Tests finales con asistente habilitado | 36 pasaron, incluidos cierre de rutas y tres pruebas de publicación con HTTP local simulado |
 | Build web normal y flag de asistente true | Ambos pasaron |
 | Deno check Edge Function | Pasó, Deno 2.9.6 |
 | Deno schema tests | 2 pasaron, cero llamadas OpenAI |

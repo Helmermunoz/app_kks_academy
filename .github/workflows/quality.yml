@@ -15,7 +15,7 @@ jobs:
           echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
       - run: flutter pub get
       - run: flutter analyze
-      - run: flutter test
+      - run: flutter test --dart-define=ENABLE_NUTRITION_ASSISTANT=true
       - run: flutter build web --release --dart-define=ENABLE_NUTRITION_ASSISTANT=true
   backend:
     runs-on: ubuntu-latest
