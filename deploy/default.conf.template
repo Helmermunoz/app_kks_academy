@@ -1,0 +1,15 @@
+server {
+    listen ${PORT};
+    listen [::]:${PORT};
+    server_name _;
+    root /usr/share/nginx/html;
+    include /etc/nginx/mime.types;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header X-Frame-Options DENY always;
+    # Flutter assets use stable names, so revalidate all releases.
+    add_header Cache-Control "no-cache" always;
+    location = /healthz { access_log off; return 200 'ok'; }
+    location / { try_files $uri $uri/ /index.html; }
+    location ~* \.(js|json|wasm|png|ico|svg|ttf|woff2?)$ { try_files $uri =404; }
+}

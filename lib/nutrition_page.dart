@@ -169,6 +169,11 @@ class _NutritionPageState extends State<NutritionPage> {
                                 'goals': 'Objetivos',
                                 'allergies': 'Alergias e intolerancias',
                                 'preferences': 'Preferencias de comida',
+                                if (const bool.fromEnvironment(
+                                  'ENABLE_NUTRITION_ASSISTANT',
+                                ))
+                                  'dietary_restrictions':
+                                      'Restricciones alimentarias',
                                 'budget': 'Presupuesto',
                               }.entries.map(
                                 (e) => Text(
@@ -191,7 +196,7 @@ class _NutritionPageState extends State<NutritionPage> {
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        'Copia los valores del reporte. El metabolismo basal no es una meta de calorías diarias. Los datos no se envían a una IA; las sugerencias de comidas todavía no están habilitadas.',
+                        'Copia los valores del reporte. El metabolismo basal no es una meta de calorías diarias. InBody no se envía a la IA. Las propuestas de comidas, cuando estén habilitadas, requieren consentimiento y revisión profesional.',
                       ),
                       if (rows.isEmpty)
                         const Padding(
@@ -262,7 +267,14 @@ class _NutritionFormState extends State<NutritionForm> {
     for (final key
         in (widget.measurement
             ? [...measurementFields.keys, 'notes']
-            : ['goals', 'allergies', 'preferences', 'budget']))
+            : [
+                'goals',
+                'allergies',
+                'preferences',
+                'budget',
+                if (const bool.fromEnvironment('ENABLE_NUTRITION_ASSISTANT'))
+                  'dietary_restrictions',
+              ]))
       key: TextEditingController(text: widget.initial?[key]?.toString()),
   };
   late DateTime? date = widget.measurement
@@ -335,6 +347,7 @@ class _NutritionFormState extends State<NutritionForm> {
                         'goals': 'Objetivos',
                         'allergies': 'Alergias e intolerancias',
                         'preferences': 'Preferencias de comida',
+                        'dietary_restrictions': 'Restricciones alimentarias',
                         'budget': 'Presupuesto (indica moneda y periodo)',
                       }[entry.key]!;
                   return TextFormField(

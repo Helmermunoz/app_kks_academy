@@ -15,6 +15,12 @@ class SessionDetails extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Chip(label: Text(sessionKinds[session['kind']] ?? 'Entrenamiento')),
+      if (session['duration_minutes'] != null)
+        Text('Duración: ${session['duration_minutes']} minutos'),
+      if (session['intensity'] != null)
+        Text(
+          'Intensidad: ${const {'low': 'Baja', 'moderate': 'Moderada', 'high': 'Alta'}[session['intensity']] ?? session['intensity']}',
+        ),
       Text(
         'Lugar: ${(session['location'] as String? ?? '').isEmpty ? 'Por confirmar' : session['location']}',
       ),

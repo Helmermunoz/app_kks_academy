@@ -1,0 +1,33 @@
+name: Validate release proposal
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install matching Flutter
+        run: |
+          git clone --depth 1 --branch 3.47.5 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build web --release --dart-define=ENABLE_NUTRITION_ASSISTANT=true
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.6
+      - run: deno check supabase/functions/nutrition-assistant/index.ts
+      - run: deno test supabase/functions/nutrition-assistant/schema_test.ts
+      - run: npm install --prefix .tools --save-exact @electric-sql/pglite@0.5.8
+      - run: node scripts/test-sql.mjs

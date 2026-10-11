@@ -1,3 +1,7 @@
 [functions.create-account]
 # The handler verifies the JWT with Auth and checks the stored administrator role.
 verify_jwt = false
+
+[functions.nutrition-assistant]
+# getUser verifies every request; claim RPC checks stored role and assignment.
+verify_jwt = false

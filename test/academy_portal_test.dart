@@ -108,6 +108,25 @@ class FakeAcademy extends AcademyRepository {
 }
 
 void main() {
+  testWidgets('Session loss removes open private routes', (tester) async {
+    final sessionRepo = FakeAcademy();
+    addTearDown(sessionRepo.events.close);
+    await tester.pumpWidget(MyApp(repository: sessionRepo));
+    await tester.pumpAndSettle();
+    final memberContext = tester.element(find.text('Hola, Alex'));
+    Navigator.of(memberContext).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            const Scaffold(body: Text('Private details on secondary page')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Private details on secondary page'), findsOneWidget);
+    await sessionRepo.signOut();
+    await tester.pumpAndSettle();
+    expect(find.text('Private details on secondary page'), findsNothing);
+    expect(find.text('Entrar'), findsOneWidget);
+  });
   late FakeAcademy repo;
   setUp(() {
     repo = FakeAcademy();

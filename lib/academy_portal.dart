@@ -9,6 +9,7 @@ import 'training_calendar.dart';
 import 'video_panel.dart';
 import 'nutrition_page.dart';
 import 'development_page.dart';
+import 'nutrition_proposals.dart';
 
 String roleLabel(String role) => switch (role) {
   'admin' => 'Administrador',
@@ -31,7 +32,11 @@ class _AcademyPortalState extends State<AcademyPortal> {
     super.initState();
     user = widget.repository.userId;
     subscription = widget.repository.sessions.listen((id) {
-      if (mounted) setState(() => user = id);
+      if (mounted && id != user) {
+        // Clear private pages/dialogs belonging to the previous session.
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        setState(() => user = id);
+      }
     });
   }
 
@@ -290,6 +295,7 @@ class _MemberPageState extends State<MemberPage> {
     final saved = await showDialog<bool>(
       context: context,
       builder: (_) => WorkoutDialog(
+        nutritionEnabled: repo.proposalStore != null,
         workout: workout,
         save: (day, title, instructions, details) => repo.saveWorkout(
           target,
@@ -542,6 +548,21 @@ class _MemberPageState extends State<MemberPage> {
                     ),
                   ),
                 ),
+              if (athlete != null && repo.proposalStore != null)
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.fact_check),
+                  label: const Text('Propuestas de alimentación'),
+                  onPressed: () => Navigator.push<void>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => NutritionProposalsPage(
+                        store: repo.proposalStore!,
+                        athlete: athlete!,
+                        staff: staff,
+                      ),
+                    ),
+                  ),
+                ),
               TherapyNotice(sessions: visibleWorkouts, completed: completed),
               if (repo.videoStore != null)
                 OutlinedButton.icon(
@@ -573,6 +594,10 @@ class _MemberPageState extends State<MemberPage> {
                         const SizedBox(height: 10),
                         Text(w['instructions']),
                         SessionDetails(session: w),
+                        if (staff && w['publication_status'] == 'draft')
+                          const Text(
+                            'Borrador · todavía no visible para el atleta',
+                          ),
                         if (repo.videoStore != null && w['kind'] != 'therapy')
                           OutlinedButton.icon(
                             icon: const Icon(Icons.video_collection),
@@ -715,6 +740,7 @@ class _PasswordFormState extends State<PasswordForm> {
 
 class WorkoutDialog extends StatefulWidget {
   final Record? workout;
+  final bool nutritionEnabled;
   final Future<void> Function(
     String day,
     String title,
@@ -722,12 +748,22 @@ class WorkoutDialog extends StatefulWidget {
     Record details,
   )
   save;
-  const WorkoutDialog({super.key, this.workout, required this.save});
+  const WorkoutDialog({
+    super.key,
+    this.workout,
+    required this.save,
+    this.nutritionEnabled = false,
+  });
   @override
   State<WorkoutDialog> createState() => _WorkoutDialogState();
 }
 
 class _WorkoutDialogState extends State<WorkoutDialog> {
+  late final duration = TextEditingController(
+    text: widget.workout?['duration_minutes']?.toString(),
+  );
+  late String? intensity = widget.workout?['intensity'];
+  late bool published = widget.workout?['publication_status'] != 'draft';
   late String kind = widget.workout?['kind'] ?? 'training';
   late final location = TextEditingController(
     text: widget.workout?['location'],
@@ -757,6 +793,7 @@ class _WorkoutDialogState extends State<WorkoutDialog> {
     location.dispose();
     throwingPlan.dispose();
     startTime.dispose();
+    duration.dispose();
     super.dispose();
   }
 
@@ -810,6 +847,48 @@ class _WorkoutDialogState extends State<WorkoutDialog> {
                       .toList(),
                   onChanged: busy ? null : (v) => setState(() => kind = v!),
                 ),
+                if (widget.nutritionEnabled) ...[
+                  TextFormField(
+                    controller: duration,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Duración en minutos (opcional)',
+                    ),
+                    validator: (v) =>
+                        (v ?? '').trim().isEmpty ||
+                            (int.tryParse(v!) != null &&
+                                int.parse(v) >= 1 &&
+                                int.parse(v) <= 480)
+                        ? null
+                        : 'Usa entre 1 y 480 minutos',
+                  ),
+                  DropdownButtonFormField<String>(
+                    initialValue: intensity,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Intensidad (opcional)',
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'low', child: Text('Baja')),
+                      DropdownMenuItem(
+                        value: 'moderate',
+                        child: Text('Moderada'),
+                      ),
+                      DropdownMenuItem(value: 'high', child: Text('Alta')),
+                    ],
+                    onChanged: busy
+                        ? null
+                        : (v) => setState(() => intensity = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Publicar para el atleta'),
+                    value: published,
+                    onChanged: busy
+                        ? null
+                        : (v) => setState(() => published = v),
+                  ),
+                ],
                 if (kind == 'therapy')
                   const Text(
                     'Se mostrará un aviso de terapia agendada al atleta y a su entrenador.',
@@ -899,6 +978,11 @@ class _WorkoutDialogState extends State<WorkoutDialog> {
                   });
                   try {
                     await widget.save(date, title.text, instructions.text, {
+                      if (widget.nutritionEnabled) ...{
+                        'duration_minutes': int.tryParse(duration.text.trim()),
+                        'intensity': intensity,
+                        'publication_status': published ? 'published' : 'draft',
+                      },
                       'kind': kind,
                       'location': location.text.trim(),
                       'start_time': startTime.text,
