@@ -12,7 +12,7 @@ Auth por contraseña, roles/coach asignado, calendario diario/semanal/mensual, s
 - Nombre/iconos/colores PWA, worker de red sin caché privada, bootstrap propio. Sin modo offline de datos privados.
 - Publicación/duración/intensidad opcionales, versionado y archivo de sesiones; componentes existentes reutilizados.
 - Propuestas de alimentación privadas, revisión por profesional acreditado y asignado, borradores de prueba no publicables.
-- Cola durable/idempotente, autorización JWT/SQL, leases, backoff, límites de intentos y consumo, esquema validado, generación mock por defecto.
+- Cola durable/idempotente, intento en segundo plano tras publicación material, reintento manual si falla, autorización JWT/SQL, leases, backoff, límites de intentos y consumo, esquema validado, generación mock por defecto.
 - Consentimiento solo administrado por servidor, adultos únicamente, sin transferencia de InBody o identificación a OpenAI.
 - El cambio de identidad/cierre de sesión elimina páginas privadas abiertas.
 - Workflow de validación separado, sin modificar pages.yml.
