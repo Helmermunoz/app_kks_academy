@@ -42,11 +42,13 @@ String? validateMeasurement(String key, String text, {double? weight}) {
 class NutritionPage extends StatefulWidget {
   final NutritionStore store;
   final String athlete, athleteName;
+  final bool readOnly;
   const NutritionPage({
     super.key,
     required this.store,
     required this.athlete,
     required this.athleteName,
+    this.readOnly = false,
   });
   @override
   State<NutritionPage> createState() => _NutritionPageState();
@@ -169,29 +171,36 @@ class _NutritionPageState extends State<NutritionPage> {
                                 'goals': 'Objetivos',
                                 'allergies': 'Alergias e intolerancias',
                                 'preferences': 'Preferencias de comida',
+                                if (const bool.fromEnvironment(
+                                  'ENABLE_NUTRITION_ASSISTANT',
+                                ))
+                                  'dietary_restrictions':
+                                      'Restricciones alimentarias',
                                 'budget': 'Presupuesto',
                               }.entries.map(
                                 (e) => Text(
                                   '${e.value}: ${(profile?[e.key] as String? ?? '').isEmpty ? 'Sin registrar' : profile![e.key]}',
                                 ),
                               ),
-                              OutlinedButton(
-                                onPressed: () => edit(false),
-                                child: const Text('Editar perfil'),
-                              ),
+                              if (!widget.readOnly)
+                                OutlinedButton(
+                                  onPressed: () => edit(false),
+                                  child: const Text('Editar perfil'),
+                                ),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      FilledButton.icon(
-                        onPressed: () => edit(true),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Registrar medición InBody'),
-                      ),
+                      if (!widget.readOnly)
+                        FilledButton.icon(
+                          onPressed: () => edit(true),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Registrar medición InBody'),
+                        ),
                       const SizedBox(height: 12),
                       const Text(
-                        'Copia los valores del reporte. El metabolismo basal no es una meta de calorías diarias. Los datos no se envían a una IA; las sugerencias de comidas todavía no están habilitadas.',
+                        'Copia los valores del reporte. El metabolismo basal no es una meta de calorías diarias. InBody no se envía a la IA. Las propuestas de comidas, cuando estén habilitadas, requieren consentimiento y revisión profesional.',
                       ),
                       if (rows.isEmpty)
                         const Padding(
@@ -262,7 +271,14 @@ class _NutritionFormState extends State<NutritionForm> {
     for (final key
         in (widget.measurement
             ? [...measurementFields.keys, 'notes']
-            : ['goals', 'allergies', 'preferences', 'budget']))
+            : [
+                'goals',
+                'allergies',
+                'preferences',
+                'budget',
+                if (const bool.fromEnvironment('ENABLE_NUTRITION_ASSISTANT'))
+                  'dietary_restrictions',
+              ]))
       key: TextEditingController(text: widget.initial?[key]?.toString()),
   };
   late DateTime? date = widget.measurement
@@ -335,6 +351,7 @@ class _NutritionFormState extends State<NutritionForm> {
                         'goals': 'Objetivos',
                         'allergies': 'Alergias e intolerancias',
                         'preferences': 'Preferencias de comida',
+                        'dietary_restrictions': 'Restricciones alimentarias',
                         'budget': 'Presupuesto (indica moneda y periodo)',
                       }[entry.key]!;
                   return TextFormField(

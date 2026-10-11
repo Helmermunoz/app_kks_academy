@@ -1,12 +1,21 @@
+import 'dart:async';
+import 'account_identity.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'video_store.dart';
 import 'nutrition_store.dart';
 import 'development_store.dart';
+import 'nutrition_proposals.dart';
+
+const nutritionAssistantEnabled = bool.fromEnvironment(
+  'ENABLE_NUTRITION_ASSISTANT',
+);
 
 typedef Record = Map<String, dynamic>;
 
 abstract class AcademyRepository {
+  ProposalStore? get proposalStore => null;
   DevelopmentStore? get developmentStore => null;
   NutritionStore? get nutritionStore;
   VideoStore? get videoStore;
@@ -42,6 +51,9 @@ class SupabaseAcademyRepository implements AcademyRepository {
   final SupabaseClient client;
   SupabaseAcademyRepository(this.client);
   @override
+  ProposalStore? get proposalStore =>
+      nutritionAssistantEnabled ? SupabaseProposalStore(client) : null;
+  @override
   DevelopmentStore get developmentStore => SupabaseDevelopmentStore(client);
   @override
   NutritionStore get nutritionStore => SupabaseNutritionStore(client);
@@ -56,7 +68,7 @@ class SupabaseAcademyRepository implements AcademyRepository {
   @override
   Future<void> signIn(String email, String password) async {
     await client.auth.signInWithPassword(
-      email: email.trim(),
+      email: accountEmail(email),
       password: password,
     );
   }
@@ -141,6 +153,37 @@ class SupabaseAcademyRepository implements AcademyRepository {
       'title': title.trim(),
       'instructions': instructions.trim(),
     };
+    if (nutritionAssistantEnabled) {
+      final previous = id == null
+          ? null
+          : await client
+                .from('workouts')
+                .select('version')
+                .eq('id', id)
+                .eq('athlete_id', athlete)
+                .single();
+      final saved = id == null
+          ? await client
+                .from('workouts')
+                .insert({...values, 'athlete_id': athlete})
+                .select('id,version,publication_status')
+                .single()
+          : await client
+                .from('workouts')
+                .update(values)
+                .eq('id', id)
+                .eq('athlete_id', athlete)
+                .select('id,version,publication_status')
+                .single();
+      if (saved['publication_status'] == 'published' &&
+          saved['version'] != previous?['version']) {
+        // The SQL trigger creates the durable job. Failure never rolls back a saved workout.
+        unawaited(
+          _processNutritionJob(saved['id'] as String, saved['version'] as int),
+        );
+      }
+      return;
+    }
     if (id == null) {
       await client.from('workouts').insert({...values, 'athlete_id': athlete});
     } else {
@@ -149,6 +192,26 @@ class SupabaseAcademyRepository implements AcademyRepository {
           .update(values)
           .eq('id', id)
           .eq('athlete_id', athlete);
+    }
+  }
+
+  Future<void> _processNutritionJob(String workout, int version) async {
+    try {
+      final job = await client
+          .from('nutrition_jobs')
+          .select('id')
+          .eq('workout_id', workout)
+          .eq('workout_version', version)
+          .eq('status', 'pending')
+          .maybeSingle();
+      if (job != null) {
+        await client.functions.invoke(
+          'nutrition-assistant',
+          body: {'job_id': job['id']},
+        );
+      }
+    } catch (_) {
+      // Disabled/offline/provider failures remain inspectable/retryable in Proposals.
     }
   }
 

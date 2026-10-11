@@ -1,0 +1,15 @@
+.git
+.dart_tool
+.flutter-plugins-dependencies
+build
+coverage
+.env
+.env.*
+.tools
+.vscode
+supabase
+test
+docs
+*.log
+*.pem
+*.key

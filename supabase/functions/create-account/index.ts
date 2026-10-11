@@ -24,15 +24,15 @@ Deno.serve(async (req) => {
     if (caller?.role !== "admin" || caller.must_change_password) return reply(403, { error: "Acceso denegado" });
     const { name, email, password, role } = await req.json();
     if (typeof name !== "string" || !name.trim() || name.trim().length > 100 ||
-        typeof email !== "string" || !email.includes("@") || email.length > 254 ||
+        typeof email !== "string" || !/^[a-z0-9][a-z0-9._-]{2,31}$/.test(email.trim()) ||
         typeof password !== "string" || password.length < 12 || password.length > 128 ||
-        !["athlete", "coach"].includes(role)) return reply(400, { error: "Revisa los datos y usa una contraseña de al menos 12 caracteres" });
+        !["athlete", "coach", "viewer", "nutrition"].includes(role)) return reply(400, { error: "Revisa el usuario y usa una contraseña de al menos 12 caracteres" });
     const { data, error } = await admin.auth.admin.createUser({
-      email: email.trim(), password, email_confirm: true,
+      email: `${email.trim()}@users.kksacademy.invalid`, password, email_confirm: true,
     });
-    if (error || !data.user) return reply(400, { error: "No se pudo crear la cuenta. Revisa si el correo ya existe y la política de contraseñas." });
+    if (error || !data.user) return reply(400, { error: "No se pudo crear la cuenta. Revisa si el usuario ya existe y la política de contraseñas." });
     const { error: profileError } = await admin.from("profiles").insert({
-      id: data.user.id, name: name.trim(), role,
+      id: data.user.id, name: name.trim(), role, username: email.trim(), must_change_password: false,
     });
     if (profileError) {
       const { error: cleanupError } = await admin.auth.admin.deleteUser(data.user.id);

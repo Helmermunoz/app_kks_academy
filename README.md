@@ -2,6 +2,12 @@
 
 App web en Flutter para seguimiento de jugadores de béisbol de todas las posiciones.
 
+## Preparación Railway, PWA y propuestas de alimentación
+
+La preparación añade Docker/NGINX, identidad PWA y propuestas de alimentación desactivadas por defecto. Leer [auditoría](docs/AUDIT.md), [configuración, consentimiento y rollback](docs/RELEASE.md) y [validaciones](docs/DELIVERY.md). No aplicar nuevas migraciones ni desplegar a producción sin revisión. GitHub Pages se conserva.
+
+Se reutilizan calendario, videos, seguimiento e InBody. La migración 006 añade publicación/versiones y propuestas privadas; generación para adultos con consentimiento y revisión profesional. Los menores no usan el asistente. El modo mock no hace llamadas pagadas y sus borradores no pueden aprobarse.
+
 ## Cuentas y entrenamientos personales
 
 La app incluye acceso con Supabase, administrador, entrenadores asignados a atletas,

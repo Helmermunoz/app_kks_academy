@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'account_identity.dart';
+import 'limited_member_page.dart';
+
 import 'package:flutter/material.dart';
 
 import 'academy_brand.dart';
@@ -9,10 +12,13 @@ import 'training_calendar.dart';
 import 'video_panel.dart';
 import 'nutrition_page.dart';
 import 'development_page.dart';
+import 'nutrition_proposals.dart';
 
 String roleLabel(String role) => switch (role) {
   'admin' => 'Administrador',
   'coach' => 'Entrenador',
+  'viewer' => 'Administrador · solo consulta',
+  'nutrition' => 'Nutrición',
   _ => 'Atleta',
 };
 
@@ -31,7 +37,11 @@ class _AcademyPortalState extends State<AcademyPortal> {
     super.initState();
     user = widget.repository.userId;
     subscription = widget.repository.sessions.listen((id) {
-      if (mounted) setState(() => user = id);
+      if (mounted && id != user) {
+        // Clear private pages/dialogs belonging to the previous session.
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        setState(() => user = id);
+      }
     });
   }
 
@@ -111,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (_) {
       if (mounted) {
         setState(
-          () => error = 'No se pudo iniciar sesión. Revisa tu correo, contraseña y conexión.',
+          () => error = 'No se pudo iniciar sesión. Revisa tu usuario, contraseña y conexión.',
         );
       }
     } finally {
@@ -143,13 +153,13 @@ class _LoginPageState extends State<LoginPage> {
                   TextFormField(
                     controller: email,
                     decoration: const InputDecoration(
-                      labelText: 'Correo electrónico',
+                      labelText: 'Usuario o correo',
                     ),
-                    keyboardType: TextInputType.emailAddress,
+                    keyboardType: TextInputType.text,
                     autofillHints: const [AutofillHints.username],
-                    validator: (v) => v != null && v.contains('@')
+                    validator: (v) => v != null && validAccountLogin(v)
                         ? null
-                        : 'Escribe tu correo',
+                        : 'Escribe tu usuario',
                   ),
                   TextFormField(
                     controller: password,
@@ -290,6 +300,7 @@ class _MemberPageState extends State<MemberPage> {
     final saved = await showDialog<bool>(
       context: context,
       builder: (_) => WorkoutDialog(
+        nutritionEnabled: repo.proposalStore != null,
         workout: workout,
         save: (day, title, instructions, details) => repo.saveWorkout(
           target,
@@ -305,334 +316,378 @@ class _MemberPageState extends State<MemberPage> {
   }
 
   @override
-  Widget build(BuildContext context) => PortalFrame(
-    title: 'KKs ACADEMY',
-    actions: [
-      IconButton(
-        tooltip: 'Actualizar',
-        onPressed: loading || busy ? null : reload,
-        icon: const Icon(Icons.refresh),
-      ),
-      IconButton(
-        tooltip: 'Cerrar sesión',
-        onPressed: busy
-            ? null
-            : () async {
-                try {
-                  await repo.signOut();
-                } catch (_) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'No se pudo cerrar sesión. Intenta de nuevo.',
-                        ),
-                      ),
-                    );
-                  }
-                }
-              },
-        icon: const Icon(Icons.logout),
-      ),
-    ],
-    child: loading
-        ? const Center(child: CircularProgressIndicator())
-        : error != null
-        ? Column(
-            children: [
-              Text(error!),
-              FilledButton(onPressed: reload, child: const Text('Reintentar')),
-            ],
-          )
-        : profile?['must_change_password'] == true
-        ? PasswordForm(repository: repo, onSaved: reload)
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const AcademyPlayers(),
-              Text(
-                'Hola, ${profile!['name']}',
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(roleLabel(profile!['role'])),
-              if (repo.developmentStore != null)
-                FilledButton.icon(
-                  icon: const Icon(Icons.insights),
-                  label: Text(
-                    staff
-                        ? 'Panel del entrenador'
-                        : 'Mi seguimiento y resultados',
-                  ),
-                  onPressed: () => Navigator.push<void>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => DevelopmentPage(
-                        store: repo.developmentStore!,
-                        videos: repo.videoStore,
-                        staff: staff,
-                        initialAthlete: athlete,
-                        athletes: {
-                          for (final p in people.where(
-                            (p) => p['role'] == 'athlete',
-                          ))
-                            p['id'] as String: p['name'] as String,
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 20),
-              if (admin) ...[
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: FilledButton.icon(
-                    onPressed: busy
-                        ? null
-                        : () async {
-                            final saved = await showDialog<bool>(
-                              context: context,
-                              builder: (_) => AccountDialog(repository: repo),
-                            );
-                            if (saved == true && mounted) await reload();
-                          },
-                    icon: const Icon(Icons.person_add),
-                    label: const Text('Crear cuenta'),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              if (staff && people.any((p) => p['role'] == 'athlete'))
-                DropdownButtonFormField<String>(
-                  key: ValueKey(athlete),
-                  initialValue: athlete,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Atleta',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: people
-                      .where((p) => p['role'] == 'athlete')
-                      .map(
-                        (p) => DropdownMenuItem<String>(
-                          value: p['id'],
-                          child: Text(p['name']),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: busy
-                      ? null
-                      : (value) {
-                          athlete = value;
-                          reload();
-                        },
-                ),
-              if (admin && athlete != null)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Entrenadores de este atleta',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        if (!people.any((p) => p['role'] == 'coach'))
-                          const Text(
-                            'Crea una cuenta de entrenador para asignarla.',
-                          ),
-                        ...people
-                            .where((p) => p['role'] == 'coach')
-                            .map(
-                              (p) => CheckboxListTile(
-                                title: Text(p['name']),
-                                contentPadding: EdgeInsets.zero,
-                                value: links.any(
-                                  (l) =>
-                                      l['coach_id'] == p['id'] &&
-                                      l['athlete_id'] == athlete,
-                                ),
-                                onChanged: busy
-                                    ? null
-                                    : (value) => perform(
-                                        () => repo.assign(
-                                          p['id'],
-                                          athlete!,
-                                          value!,
-                                        ),
-                                      ),
+  Widget build(BuildContext context) =>
+      !loading &&
+          error == null &&
+          ['viewer', 'nutrition'].contains(profile?['role'])
+      ? LimitedMemberPage(repository: repo, profile: profile!, people: people)
+      : PortalFrame(
+          title: 'KKs ACADEMY',
+          actions: [
+            IconButton(
+              tooltip: 'Actualizar',
+              onPressed: loading || busy ? null : reload,
+              icon: const Icon(Icons.refresh),
+            ),
+            IconButton(
+              tooltip: 'Cerrar sesión',
+              onPressed: busy
+                  ? null
+                  : () async {
+                      try {
+                        await repo.signOut();
+                      } catch (_) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'No se pudo cerrar sesión. Intenta de nuevo.',
                               ),
                             ),
-                      ],
+                          );
+                        }
+                      }
+                    },
+              icon: const Icon(Icons.logout),
+            ),
+          ],
+          child: loading
+              ? const Center(child: CircularProgressIndicator())
+              : error != null
+              ? Column(
+                  children: [
+                    Text(error!),
+                    FilledButton(
+                      onPressed: reload,
+                      child: const Text('Reintentar'),
                     ),
-                  ),
-                ),
-              const SizedBox(height: 20),
-              Text(
-                staff ? 'Entrenamientos personales' : 'Mi entrenamiento',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                staff
-                    ? 'Solo el atleta, sus entrenadores y administración pueden ver este plan.'
-                    : 'Este plan está asignado a tu cuenta.',
-              ),
-              const SizedBox(height: 12),
-              if (!staff)
-                TrainingCalendar(
-                  selectedDate: selectedDate,
-                  workoutDays: {
-                    for (final workout in workouts)
-                      DateUtils.dateOnly(
-                        DateTime.parse(workout['day'] as String),
-                      ),
-                  },
-                  onSelected: (date) => setState(() => selectedDate = date),
-                ),
-              if (staff && athlete != null)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: FilledButton.icon(
-                    onPressed: busy ? null : () => editWorkout(),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Agregar entrenamiento'),
-                  ),
-                ),
-              if (athlete == null)
-                const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text('Todavía no tienes atletas asignados.'),
+                  ],
                 )
-              else if (staff && workouts.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text('Todavía no hay entrenamientos asignados.'),
-                ),
-              if (!staff && visibleWorkouts.isEmpty)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        Icon(Icons.event_available, size: 36),
-                        SizedBox(height: 12),
-                        Text('No hay entrenamientos para este día.'),
-                        SizedBox(height: 4),
-                        Text('Puedes consultar otra fecha en el calendario.'),
-                      ],
-                    ),
-                  ),
-                ),
-              if (athlete != null && repo.nutritionStore != null)
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.restaurant),
-                  label: const Text('Mi alimentación / InBody'),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => NutritionPage(
-                        store: repo.nutritionStore!,
-                        athlete: athlete!,
-                        athleteName: people.firstWhere(
-                          (p) => p['id'] == athlete,
-                        )['name'],
+              : profile?['must_change_password'] == true
+              ? PasswordForm(repository: repo, onSaved: reload)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const AcademyPlayers(),
+                    Text(
+                      'Hola, ${profile!['name']}',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ),
-              TherapyNotice(sessions: visibleWorkouts, completed: completed),
-              if (repo.videoStore != null)
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.video_library),
-                  label: const Text('Videos de la academia'),
-                  onPressed: () => showDialog<void>(
-                    context: context,
-                    builder: (_) => VideoPanel(store: repo.videoStore!),
-                  ),
-                ),
-              ...visibleWorkouts.map(
-                (w) => Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          w['day'],
-                          style: const TextStyle(color: Color(0xff96c4ff)),
+                    Text(roleLabel(profile!['role'])),
+                    if (repo.developmentStore != null)
+                      FilledButton.icon(
+                        icon: const Icon(Icons.insights),
+                        label: Text(
+                          staff
+                              ? 'Panel del entrenador'
+                              : 'Mi seguimiento y resultados',
                         ),
-                        Text(
-                          w['title'],
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        onPressed: () => Navigator.push<void>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DevelopmentPage(
+                              store: repo.developmentStore!,
+                              videos: repo.videoStore,
+                              staff: staff,
+                              initialAthlete: athlete,
+                              athletes: {
+                                for (final p in people.where(
+                                  (p) => p['role'] == 'athlete',
+                                ))
+                                  p['id'] as String: p['name'] as String,
+                              },
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        Text(w['instructions']),
-                        SessionDetails(session: w),
-                        if (repo.videoStore != null && w['kind'] != 'therapy')
-                          OutlinedButton.icon(
-                            icon: const Icon(Icons.video_collection),
-                            label: const Text(
-                              'Ver / subir videos de esta sesión',
-                            ),
-                            onPressed: () => showDialog<void>(
-                              context: context,
-                              builder: (_) => VideoPanel(
-                                store: repo.videoStore!,
-                                workout: w,
+                      ),
+                    const SizedBox(height: 20),
+                    if (admin) ...[
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton.icon(
+                          onPressed: busy
+                              ? null
+                              : () async {
+                                  final saved = await showDialog<bool>(
+                                    context: context,
+                                    builder: (_) =>
+                                        AccountDialog(repository: repo),
+                                  );
+                                  if (saved == true && mounted) await reload();
+                                },
+                          icon: const Icon(Icons.person_add),
+                          label: const Text('Crear cuenta'),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    if (staff && people.any((p) => p['role'] == 'athlete'))
+                      DropdownButtonFormField<String>(
+                        key: ValueKey(athlete),
+                        initialValue: athlete,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Atleta',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: people
+                            .where((p) => p['role'] == 'athlete')
+                            .map(
+                              (p) => DropdownMenuItem<String>(
+                                value: p['id'],
+                                child: Text(p['name']),
                               ),
-                            ),
-                          ),
-                        const SizedBox(height: 12),
-                        if (staff)
-                          Wrap(
-                            spacing: 12,
-                            crossAxisAlignment: WrapCrossAlignment.center,
+                            )
+                            .toList(),
+                        onChanged: busy
+                            ? null
+                            : (value) {
+                                athlete = value;
+                                reload();
+                              },
+                      ),
+                    if (admin && athlete != null)
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              OutlinedButton.icon(
-                                onPressed: busy ? null : () => editWorkout(w),
-                                icon: const Icon(Icons.edit),
-                                label: const Text('Editar'),
+                              const Text(
+                                'Entrenadores de este atleta',
+                                style: TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              Text(
-                                completed.contains(w['id'])
-                                    ? 'Completado por el atleta'
-                                    : 'Pendiente',
-                              ),
-                            ],
-                          )
-                        else
-                          CheckboxListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('Completé mi entrenamiento'),
-                            subtitle: Text(
-                              completed.contains(w['id'])
-                                  ? 'Completado'
-                                  : 'Pendiente',
-                            ),
-                            value: completed.contains(w['id']),
-                            onChanged: busy
-                                ? null
-                                : (value) => perform(
-                                    () => repo.complete(
-                                      athlete!,
-                                      w['id'],
-                                      value!,
+                              if (!people.any((p) => p['role'] == 'coach'))
+                                const Text(
+                                  'Crea una cuenta de entrenador para asignarla.',
+                                ),
+                              ...people
+                                  .where((p) => p['role'] == 'coach')
+                                  .map(
+                                    (p) => CheckboxListTile(
+                                      title: Text(p['name']),
+                                      contentPadding: EdgeInsets.zero,
+                                      value: links.any(
+                                        (l) =>
+                                            l['coach_id'] == p['id'] &&
+                                            l['athlete_id'] == athlete,
+                                      ),
+                                      onChanged: busy
+                                          ? null
+                                          : (value) => perform(
+                                              () => repo.assign(
+                                                p['id'],
+                                                athlete!,
+                                                value!,
+                                              ),
+                                            ),
                                     ),
                                   ),
+                            ],
                           ),
-                      ],
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+                    Text(
+                      staff ? 'Entrenamientos personales' : 'Mi entrenamiento',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
+                    Text(
+                      staff
+                          ? 'Solo el atleta, sus entrenadores y administración pueden ver este plan.'
+                          : 'Este plan está asignado a tu cuenta.',
+                    ),
+                    const SizedBox(height: 12),
+                    if (!staff)
+                      TrainingCalendar(
+                        selectedDate: selectedDate,
+                        workoutDays: {
+                          for (final workout in workouts)
+                            DateUtils.dateOnly(
+                              DateTime.parse(workout['day'] as String),
+                            ),
+                        },
+                        onSelected: (date) =>
+                            setState(() => selectedDate = date),
+                      ),
+                    if (staff && athlete != null)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton.icon(
+                          onPressed: busy ? null : () => editWorkout(),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Agregar entrenamiento'),
+                        ),
+                      ),
+                    if (athlete == null)
+                      const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text('Todavía no tienes atletas asignados.'),
+                      )
+                    else if (staff && workouts.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text('Todavía no hay entrenamientos asignados.'),
+                      ),
+                    if (!staff && visibleWorkouts.isEmpty)
+                      const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Column(
+                            children: [
+                              Icon(Icons.event_available, size: 36),
+                              SizedBox(height: 12),
+                              Text('No hay entrenamientos para este día.'),
+                              SizedBox(height: 4),
+                              Text(
+                                'Puedes consultar otra fecha en el calendario.',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (athlete != null && repo.nutritionStore != null)
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.restaurant),
+                        label: const Text('Mi alimentación / InBody'),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => NutritionPage(
+                              store: repo.nutritionStore!,
+                              athlete: athlete!,
+                              athleteName: people.firstWhere(
+                                (p) => p['id'] == athlete,
+                              )['name'],
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (athlete != null && repo.proposalStore != null)
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.fact_check),
+                        label: const Text('Propuestas de alimentación'),
+                        onPressed: () => Navigator.push<void>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => NutritionProposalsPage(
+                              store: repo.proposalStore!,
+                              athlete: athlete!,
+                              staff: staff,
+                            ),
+                          ),
+                        ),
+                      ),
+                    TherapyNotice(
+                      sessions: visibleWorkouts,
+                      completed: completed,
+                    ),
+                    if (repo.videoStore != null)
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.video_library),
+                        label: const Text('Videos de la academia'),
+                        onPressed: () => showDialog<void>(
+                          context: context,
+                          builder: (_) => VideoPanel(store: repo.videoStore!),
+                        ),
+                      ),
+                    ...visibleWorkouts.map(
+                      (w) => Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                w['day'],
+                                style: const TextStyle(
+                                  color: Color(0xff96c4ff),
+                                ),
+                              ),
+                              Text(
+                                w['title'],
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(w['instructions']),
+                              SessionDetails(session: w),
+                              if (staff && w['publication_status'] == 'draft')
+                                const Text(
+                                  'Borrador · todavía no visible para el atleta',
+                                ),
+                              if (repo.videoStore != null &&
+                                  w['kind'] != 'therapy')
+                                OutlinedButton.icon(
+                                  icon: const Icon(Icons.video_collection),
+                                  label: const Text(
+                                    'Ver / subir videos de esta sesión',
+                                  ),
+                                  onPressed: () => showDialog<void>(
+                                    context: context,
+                                    builder: (_) => VideoPanel(
+                                      store: repo.videoStore!,
+                                      workout: w,
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(height: 12),
+                              if (staff)
+                                Wrap(
+                                  spacing: 12,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    OutlinedButton.icon(
+                                      onPressed: busy
+                                          ? null
+                                          : () => editWorkout(w),
+                                      icon: const Icon(Icons.edit),
+                                      label: const Text('Editar'),
+                                    ),
+                                    Text(
+                                      completed.contains(w['id'])
+                                          ? 'Completado por el atleta'
+                                          : 'Pendiente',
+                                    ),
+                                  ],
+                                )
+                              else
+                                CheckboxListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: const Text(
+                                    'Completé mi entrenamiento',
+                                  ),
+                                  subtitle: Text(
+                                    completed.contains(w['id'])
+                                        ? 'Completado'
+                                        : 'Pendiente',
+                                  ),
+                                  value: completed.contains(w['id']),
+                                  onChanged: busy
+                                      ? null
+                                      : (value) => perform(
+                                          () => repo.complete(
+                                            athlete!,
+                                            w['id'],
+                                            value!,
+                                          ),
+                                        ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-  );
+        );
 }
 
 class PasswordForm extends StatefulWidget {
@@ -715,6 +770,7 @@ class _PasswordFormState extends State<PasswordForm> {
 
 class WorkoutDialog extends StatefulWidget {
   final Record? workout;
+  final bool nutritionEnabled;
   final Future<void> Function(
     String day,
     String title,
@@ -722,12 +778,22 @@ class WorkoutDialog extends StatefulWidget {
     Record details,
   )
   save;
-  const WorkoutDialog({super.key, this.workout, required this.save});
+  const WorkoutDialog({
+    super.key,
+    this.workout,
+    required this.save,
+    this.nutritionEnabled = false,
+  });
   @override
   State<WorkoutDialog> createState() => _WorkoutDialogState();
 }
 
 class _WorkoutDialogState extends State<WorkoutDialog> {
+  late final duration = TextEditingController(
+    text: widget.workout?['duration_minutes']?.toString(),
+  );
+  late String? intensity = widget.workout?['intensity'];
+  late bool published = widget.workout?['publication_status'] != 'draft';
   late String kind = widget.workout?['kind'] ?? 'training';
   late final location = TextEditingController(
     text: widget.workout?['location'],
@@ -757,6 +823,7 @@ class _WorkoutDialogState extends State<WorkoutDialog> {
     location.dispose();
     throwingPlan.dispose();
     startTime.dispose();
+    duration.dispose();
     super.dispose();
   }
 
@@ -810,6 +877,48 @@ class _WorkoutDialogState extends State<WorkoutDialog> {
                       .toList(),
                   onChanged: busy ? null : (v) => setState(() => kind = v!),
                 ),
+                if (widget.nutritionEnabled) ...[
+                  TextFormField(
+                    controller: duration,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Duración en minutos (opcional)',
+                    ),
+                    validator: (v) =>
+                        (v ?? '').trim().isEmpty ||
+                            (int.tryParse(v!) != null &&
+                                int.parse(v) >= 1 &&
+                                int.parse(v) <= 480)
+                        ? null
+                        : 'Usa entre 1 y 480 minutos',
+                  ),
+                  DropdownButtonFormField<String>(
+                    initialValue: intensity,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Intensidad (opcional)',
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'low', child: Text('Baja')),
+                      DropdownMenuItem(
+                        value: 'moderate',
+                        child: Text('Moderada'),
+                      ),
+                      DropdownMenuItem(value: 'high', child: Text('Alta')),
+                    ],
+                    onChanged: busy
+                        ? null
+                        : (v) => setState(() => intensity = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Publicar para el atleta'),
+                    value: published,
+                    onChanged: busy
+                        ? null
+                        : (v) => setState(() => published = v),
+                  ),
+                ],
                 if (kind == 'therapy')
                   const Text(
                     'Se mostrará un aviso de terapia agendada al atleta y a su entrenador.',
@@ -899,6 +1008,11 @@ class _WorkoutDialogState extends State<WorkoutDialog> {
                   });
                   try {
                     await widget.save(date, title.text, instructions.text, {
+                      if (widget.nutritionEnabled) ...{
+                        'duration_minutes': int.tryParse(duration.text.trim()),
+                        'intensity': intensity,
+                        'publication_status': published ? 'published' : 'draft',
+                      },
                       'kind': kind,
                       'location': location.text.trim(),
                       'start_time': startTime.text,
@@ -970,13 +1084,16 @@ class _AccountDialogState extends State<AccountDialog> {
                 ),
                 TextFormField(
                   controller: email,
-                  keyboardType: TextInputType.emailAddress,
+                  keyboardType: TextInputType.text,
                   decoration: const InputDecoration(
-                    labelText: 'Correo electrónico',
+                    labelText: 'Nombre de usuario',
                   ),
-                  validator: (v) => v != null && v.contains('@')
+                  validator: (v) =>
+                      v != null &&
+                          RegExp(r'^[a-z0-9][a-z0-9._-]{2,31}$')
+                              .hasMatch(v.trim())
                       ? null
-                      : 'Escribe un correo válido',
+                      : 'Usa 3–32 letras minúsculas, números, puntos o guiones',
                 ),
                 DropdownButtonFormField<String>(
                   initialValue: role,
@@ -984,7 +1101,7 @@ class _AccountDialogState extends State<AccountDialog> {
                   decoration: const InputDecoration(
                     labelText: 'Tipo de cuenta',
                   ),
-                  items: ['athlete', 'coach']
+                  items: ['athlete', 'coach', 'viewer', 'nutrition']
                       .map(
                         (r) => DropdownMenuItem(
                           value: r,
@@ -997,16 +1114,14 @@ class _AccountDialogState extends State<AccountDialog> {
                 TextFormField(
                   controller: password,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Contraseña temporal',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Contraseña'),
                   validator: (v) => (v?.length ?? 0) < 12
                       ? 'Usa al menos 12 caracteres'
                       : null,
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Entrega el correo y la contraseña temporal directamente al usuario. Tendrá que cambiarla al entrar.',
+                  'Entrega el usuario y su contraseña directamente a la persona. Puede conservarla hasta que solicite cambiarla.',
                 ),
                 if (error != null)
                   Text(
